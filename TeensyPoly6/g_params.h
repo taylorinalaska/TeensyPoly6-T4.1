@@ -1,10 +1,12 @@
 if (millis() - prevTimer > timer) {
 
-  mainVol = (float)analogRead(A11) / 1024;
-  preset = analogRead(A24) / 190;
+  mainVol = (float)mux23 / 1024;
+  //preset = analogRead(A24) / 190;
+  preset = 0;
 
-
-  bend = 1 + ((float)analogRead(A0) / 1023 / 4.3) - 0.12;
+  //bend = 1 + ((float)analogRead(A0) / 1023 / 4.3) - 0.12;
+  bend = 0.5;
+  Serial.println(bend);
 
 
   //main octave
@@ -56,29 +58,29 @@ if (millis() - prevTimer > timer) {
       shapeB = 2;
     }
 
-    shapeC = analogRead(A4);
-
-    if (analogRead(A2) < 512) {
-      tuneB = ((float)analogRead(A2) / 1023) + 0.5;
+    if (mux13 < 512) {
+      tuneB = ((float)mux13 / 1023) + 0.5;
     } else {
-      tuneB = ((float)analogRead(A2) / 510);
+      tuneB = ((float)mux13 / 510);
     }
 
-    if (analogRead(A3) < 512) {
-      tuneC = ((float)analogRead(A3) / 1023) + 0.5;
+    if (mux12 < 512) {
+      tuneC = ((float)mux12 / 1023) + 0.5;
     } else {
-      tuneC = ((float)analogRead(A3) / 510);
+      tuneC = ((float)mux12 / 510);
     }
 
-    crossMod = (float)analogRead(A1) / 512;
+    crossMod = (float)mux14 / 512;
 
-    vcoAvol = (float)analogRead(A5) / 1023;
-    vcoBvol = (float)analogRead(A6) / 1023;
-    vcoCvol = (float)analogRead(A7) / 1023;
-    Subvol = (float)analogRead(A21) / 1023;
+    vcoCvol = (float)mux8 / 1023;
+    vcoBvol = (float)mux9 / 1023;
+    vcoBvol = (float)mux10 / 1023;
+    shapeC = (float)mux11;
 
-    cut = 15000 * (float)analogRead(A13) / 1023 + 15;
-    res = 4.5 * (float)analogRead(A12) / 1023 + 1.1;
+    Subvol = (float)mux17 / 1023;
+
+    cut = 15000 * (float)mux25 / 1023 + 15;
+    res = 4.5 * (float)mux24 / 1023 + 1.1;
     filtAtt = (3000 * (float)mux0 / 1023);
     filtDec = (3000 * (float)mux1 / 1023);
     filtAmt = (float)mux2 / 512 - 1;
@@ -88,10 +90,10 @@ if (millis() - prevTimer > timer) {
       filterMode = 0;
     }
 
-    envAtt = 3000 * (float)analogRead(A25) / 1023;
-    envDec = 5000 * (float)analogRead(A26) / 1023;
-    envRel = 5000 * (float)analogRead(A26) / 1023;
-    envSus = (float)analogRead(A10) / 100;
+    envAtt = 3000 * (float)mux26 / 1023;
+    envDec = 5000 * (float)mux27 / 1023;
+    envRel = 5000 * (float)mux27 / 1023;
+    envSus = (float)mux22 / 100;
 
     if (lfoAdest == 0 && lfoAshape != 2) {
       lfoAamp = (float)mux3 / 1024 / 10;
@@ -121,14 +123,14 @@ if (millis() - prevTimer > timer) {
       lfoAshape = 2;
     }
 
-    lfoBamp = (float)analogRead(A14) / 1023;
-    lfoBfreq = 5 * (float)analogRead(A22) / 1023 + 0.1;
+    lfoBamp = (float)mux15 / 1023;
+    lfoBfreq = 5 * (float)mux16 / 1023 + 0.1;
 
-    dlyAmt = (float)analogRead(A16) / 1100 - 0.1;
-    dlyTimeL = analogRead(A17) / 2.5;
-    dlyTimeR = analogRead(A17) / 1.25;
-    revMix = ((float)analogRead(A19) / 1024 / 1.5);
-    revSize = ((float)analogRead(A18) / 1024 - 0.01);
+    dlyAmt = (float)mux21 / 1100 - 0.1;
+    dlyTimeL = mux20 / 2.5;
+    dlyTimeR = mux20 / 1.25;
+    revMix = ((float)mux18 / 1024 / 1.5);
+    revSize = ((float)mux19 / 1024 - 0.01);
 
     if (dlyAmt < 0) {
       dlyAmt = 0;

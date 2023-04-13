@@ -1,4 +1,9 @@
 #include "i_noteOn.h"
+#include <ADC.h>
+#include <ADC_util.h>
+
+ADC *adc = new ADC();
+
 
 void setup() {
   Serial.begin(9600);
@@ -48,10 +53,16 @@ void setup() {
   digitalWrite(29, 0);
   digitalWrite(30, 0);
 
+  adc->adc0->setAveraging(16); // set number of averages 0, 4, 8, 16 or 32.
+  adc->adc0->setResolution(10); // set bits of resolution  8, 10, 12 or 16 bits.
+  adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_LOW_SPEED); // change the conversion speed
+  adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_SPEED); // change the sampling speed
 
-
-
-
+  //MUXs on ADC1
+  adc->adc1->setAveraging(16); // set number of averages 0, 4, 8, 16 or 32.
+  adc->adc1->setResolution(10); // set bits of resolution  8, 10, 12 or 16 bits.
+  adc->adc1->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_LOW_SPEED); // change the conversion speed
+  adc->adc1->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_SPEED); // change the sampling speed
 
   //vco setup
   vcoA1.begin(vcoVol, 150, WAVEFORM_SAWTOOTH);

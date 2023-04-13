@@ -272,8 +272,50 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 //////// Multiplexer //////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-const int muxPots = A15;
+const int muxPots1 = A15;
+const int muxPots2 = A14;
+const int muxPots3 = A16;
+const int muxPots4 = A17;
+
 float wait = 0; //mux read delay
+
+#define NO_OF_VOICES 6
+int voiceToReturn = -1;        //Initialise
+long earliestTime = millis();  //For voice allocation - initialise to now
+
+struct VoiceAndNote {
+  int note;
+  int velocity;
+  long timeOn;
+};
+
+struct VoiceAndNote voices[NO_OF_VOICES] = {
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 }
+};
+
+boolean voiceOn[NO_OF_VOICES] = { false, false, false, false, false, false };
+int prevNote = 0;  //Initialised to middle value
+bool notes[88] = { 0 }, initial_loop = 1;
+int8_t noteOrder[40] = { 0 }, orderIndx = { 0 };
+
+#define MUXCHANNELS 8
+#define QUANTISE_FACTOR 7
+static byte muxInput = 0;
+
+static int mux1ValuesPrev[MUXCHANNELS] = {};
+static int mux2ValuesPrev[MUXCHANNELS] = {};
+static int mux3ValuesPrev[MUXCHANNELS] = {};
+static int mux4ValuesPrev[MUXCHANNELS] = {};
+
+static int mux1Read = 0;
+static int mux2Read = 0;
+static int mux3Read = 0;
+static int mux4Read = 0;
 
 int mux0;
 int mux1;
@@ -283,8 +325,30 @@ int mux4;
 int mux5;
 int mux6;
 int mux7;
-
-
+int mux8;
+int mux9;
+int mux10;
+int mux11;
+int mux12;
+int mux13;
+int mux14;
+int mux15;
+int mux16;
+int mux17;
+int mux18;
+int mux19;
+int mux20;
+int mux21;
+int mux22;
+int mux23;
+int mux24;
+int mux25;
+int mux26;
+int mux27;
+int mux28;
+int mux29;
+int mux30;
+int mux31;
 
 ///// notes, frequencies, voices /////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,7 +361,7 @@ int note4freq;
 int note5freq;
 int note6freq;
 
-int voices;
+//int voices;
 
 
 

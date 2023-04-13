@@ -1,10 +1,13 @@
+#include "f_mux.h"
+
 void loop() {
-  usbMIDI.read();
+  checkMux();
+  //usbMIDI.read();
   MIDI.read();
 
-  if (voices < 0) {
-    voices = 0;
-  }
+  // if (voices < 0) {
+  //   voices = 0;
+  // }
   
   //Serial.println(AudioMemoryUsageMax());
 
