@@ -10,11 +10,11 @@ if (millis() - prevTimer > timer) {
 
 
   //main octave
-  if (digitalRead(6) == 1) {
+  if (digitalRead(MAIN_OCT_1) == 1) {
     octave = 0.5;
-  } else if (digitalRead(6) == 0 && digitalRead(7) == 0) {
+  } else if (digitalRead(MAIN_OCT_1) == 0 && digitalRead(MAIN_OCT_2) == 0) {
     octave = 1;
-  } else if (digitalRead(7) == 1) {
+  } else if (digitalRead(MAIN_OCT_2) == 1) {
     octave = 2;
   }
 
@@ -25,36 +25,36 @@ if (millis() - prevTimer > timer) {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (preset == 0) {
 
-    if (digitalRead(8) == 1) {
+    if (digitalRead(B_OCTAVE_1) == 1) {
       octaveB = 0.5;
-    } else if (digitalRead(8) == 0 && digitalRead(12) == 0) {
+    } else if (digitalRead(B_OCTAVE_1) == 0 && digitalRead(B_OCTAVE_2) == 0) {
       octaveB = 1;
-    } else if (digitalRead(12) == 1) {
+    } else if (digitalRead(B_OCTAVE_2) == 1) {
       octaveB = 2;
     }
 
-    if (digitalRead(10) == 1) {
+    if (digitalRead(C_OCTAVE_1) == 1) {
       octaveC = 0.5;
-    } else if (digitalRead(10) == 0 && digitalRead(11) == 0) {
+    } else if (digitalRead(C_OCTAVE_1) == 0 && digitalRead(C_OCTAVE_2) == 0) {
       octaveC = 1;
-    } else if (digitalRead(11) == 1) {
+    } else if (digitalRead(C_OCTAVE_2) == 1) {
       octaveC = 2;
     }
 
 
-    if (digitalRead(2) == 1) {
+    if (digitalRead(A_SHAPE_1) == 1) {
       shapeA = 0;
-    } else if (digitalRead(2) == 0 && digitalRead(3) == 0) {
+    } else if (digitalRead(A_SHAPE_1) == 0 && digitalRead(A_SHAPE_2) == 0) {
       shapeA = 1;
-    } else if (digitalRead(3) == 1) {
+    } else if (digitalRead(A_SHAPE_2) == 1) {
       shapeA = 2;
     }
 
-    if (digitalRead(4) == 1) {
+    if (digitalRead(B_SHAPE_1) == 1) {
       shapeB = 0;
-    } else if (digitalRead(4) == 0 && digitalRead(5) == 0) {
+    } else if (digitalRead(B_SHAPE_1) == 0 && digitalRead(B_SHAPE_2) == 0) {
       shapeB = 1;
-    } else if (digitalRead(5) == 1) {
+    } else if (digitalRead(B_SHAPE_2) == 1) {
       shapeB = 2;
     }
 
@@ -74,7 +74,7 @@ if (millis() - prevTimer > timer) {
 
     vcoCvol = (float)mux8 / 1023;
     vcoBvol = (float)mux9 / 1023;
-    vcoBvol = (float)mux10 / 1023;
+    vcoAvol = (float)mux10 / 1023;
     shapeC = (float)mux11;
 
     Subvol = (float)mux17 / 1023;
@@ -84,15 +84,15 @@ if (millis() - prevTimer > timer) {
     filtAtt = (3000 * (float)mux0 / 1023);
     filtDec = (3000 * (float)mux1 / 1023);
     filtAmt = (float)mux2 / 512 - 1;
-    if (digitalRead(13) == 1) {
+    if (digitalRead(FILTER_MODE) == 1) {
       filterMode = 1;
-    } else if (digitalRead(13) == 0) {
+    } else if (digitalRead(FILTER_MODE) == 0) {
       filterMode = 0;
     }
 
-    envAtt = 3000 * (float)mux26 / 1023;
-    envDec = 5000 * (float)mux27 / 1023;
-    envRel = 5000 * (float)mux27 / 1023;
+    envAtt = 3000 * (float)mux27 / 1023;
+    envDec = 5000 * (float)mux26 / 1023;
+    envRel = 5000 * (float)mux26 / 1023;
     envSus = (float)mux22 / 100;
 
     if (lfoAdest == 0 && lfoAshape != 2) {
@@ -107,19 +107,19 @@ if (millis() - prevTimer > timer) {
     lfoArel = 4000 * (float)mux6 / 1024;
     lfoAsus = (float)mux7 / 1024;
 
-    if (digitalRead(24) == 1) { //lfo - pitch
+    if (digitalRead(LFOA_DEST_1) == 1) { //lfo - pitch
       lfoAdest = 0;
-    } else if ( digitalRead(24) == 0 && digitalRead(25) == 0) { //lfo - filter
+    } else if ( digitalRead(LFOA_DEST_1) == 0 && digitalRead(LFOA_DEST_2) == 0) { //lfo - filter
       lfoAdest = 1;
-    } else if (digitalRead(25) == 1) { //lfo - amp
+    } else if (digitalRead(LFOA_DEST_2) == 1) { //lfo - amp
       lfoAdest = 2;
     }
 
-    if (digitalRead(26) == 1) {
+    if (digitalRead(LFOA_SHAPE_1) == 1) {
       lfoAshape = 0;
-    } else if ( digitalRead(26) == 0 && digitalRead(27) == 0) {
+    } else if ( digitalRead(LFOA_SHAPE_1) == 0 && digitalRead(LFOA_SHAPE_2) == 0) {
       lfoAshape = 1;
-    } else if (digitalRead(27) == 1) {
+    } else if (digitalRead(LFOA_SHAPE_2) == 1) {
       lfoAshape = 2;
     }
 
@@ -151,19 +151,19 @@ if (millis() - prevTimer > timer) {
 
 
     //octave vco B
-    if (digitalRead(8) == 1) {
+    if (digitalRead(B_OCTAVE_1) == 1) {
       octBsw = 0;
-    } else if (digitalRead(8) == 0 && digitalRead(12) == 0) {
+    } else if (digitalRead(B_OCTAVE_1) == 0 && digitalRead(B_OCTAVE_2) == 0) {
       octBsw = 1;
-    } else if (digitalRead(12) == 1) {
+    } else if (digitalRead(B_OCTAVE_2) == 1) {
       octBsw = 2;
     }
     if (oldOctBsw < octBsw || oldOctBsw > octBsw) {
-      if (digitalRead(8) == 1) {
+      if (digitalRead(B_OCTAVE_1) == 1) {
         octaveB = 0.5;
-      } else if (digitalRead(8) == 0 && digitalRead(12) == 0) {
+      } else if (digitalRead(B_OCTAVE_1) == 0 && digitalRead(B_OCTAVE_2) == 0) {
         octaveB = 1;
-      } else if (digitalRead(12) == 1) {
+      } else if (digitalRead(B_OCTAVE_2) == 1) {
         octaveB = 2;
       }
       oldOctBsw = octBsw;
@@ -173,19 +173,19 @@ if (millis() - prevTimer > timer) {
 
 
     //octave vco C
-    if (digitalRead(10) == 1) {
+    if (digitalRead(C_OCTAVE_1) == 1) {
       octCsw = 0;
-    } else if (digitalRead(10) == 0 && digitalRead(11) == 0) {
+    } else if (digitalRead(C_OCTAVE_1) == 0 && digitalRead(C_OCTAVE_2) == 0) {
       octCsw = 1;
-    } else if (digitalRead(11) == 1) {
+    } else if (digitalRead(C_OCTAVE_2) == 1) {
       octCsw = 2;
     }
     if (oldOctCsw < octCsw || oldOctCsw > octCsw) {
-      if (digitalRead(10) == 1) {
+      if (digitalRead(C_OCTAVE_1) == 1) {
         octaveC = 0.5;
-      } else if (digitalRead(10) == 0 && digitalRead(11) == 0) {
+      } else if (digitalRead(C_OCTAVE_1) == 0 && digitalRead(C_OCTAVE_2) == 0) {
         octaveC = 1;
-      } else if (digitalRead(11) == 1) {
+      } else if (digitalRead(C_OCTAVE_2) == 1) {
         octaveC = 2;
       }
       oldOctCsw = octCsw;
@@ -202,19 +202,19 @@ if (millis() - prevTimer > timer) {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Shape A
-    if (digitalRead(2) == 1) {
+    if (digitalRead(A_SHAPE_1) == 1) {
       shapeAsw = 0;
-    } else if (digitalRead(2) == 0 && digitalRead(3) == 0) {
+    } else if (digitalRead(A_SHAPE_1) == 0 && digitalRead(A_SHAPE_2) == 0) {
       shapeAsw = 1;
-    } else if (digitalRead(3) == 1) {
+    } else if (digitalRead(A_SHAPE_2) == 1) {
       shapeAsw = 2;
     }
     if (oldShapeAsw < shapeAsw || oldShapeAsw > shapeAsw) {
-      if (digitalRead(2) == 1) {
+      if (digitalRead(A_SHAPE_1) == 1) {
         shapeA = 0;
-      } else if (digitalRead(2) == 0 && digitalRead(3) == 0) {
+      } else if (digitalRead(A_SHAPE_1) == 0 && digitalRead(A_SHAPE_2) == 0) {
         shapeA = 1;
-      } else if (digitalRead(3) == 1) {
+      } else if (digitalRead(A_SHAPE_2) == 1) {
         shapeA = 2;
       }
       oldShapeAsw = shapeAsw;
@@ -224,19 +224,19 @@ if (millis() - prevTimer > timer) {
 
 
     //Shape B
-    if (digitalRead(4) == 1) {
+    if (digitalRead(B_SHAPE_1) == 1) {
       shapeBsw = 0;
-    } else if (digitalRead(4) == 0 && digitalRead(5) == 0) {
+    } else if (digitalRead(B_SHAPE_1) == 0 && digitalRead(B_SHAPE_2) == 0) {
       shapeBsw = 1;
-    } else if (digitalRead(5) == 1) {
+    } else if (digitalRead(B_SHAPE_2) == 1) {
       shapeBsw = 2;
     }
     if (oldShapeBsw < shapeBsw || oldShapeBsw > shapeBsw) {
-      if (digitalRead(4) == 1) {
+      if (digitalRead(B_SHAPE_1) == 1) {
         shapeB = 0;
-      } else if (digitalRead(4) == 0 && digitalRead(5) == 0) {
+      } else if (digitalRead(B_SHAPE_1) == 0 && digitalRead(B_SHAPE_2) == 0) {
         shapeB = 1;
-      } else if (digitalRead(5) == 1) {
+      } else if (digitalRead(B_SHAPE_2) == 1) {
         shapeB = 2;
       }
       oldShapeBsw = shapeBsw;
@@ -247,9 +247,9 @@ if (millis() - prevTimer > timer) {
 
 
     //Vco C shape
-    shapeCpot = analogRead(A4);
+    shapeCpot = mux11;
     if (oldShapeCpot + tresh2 < shapeCpot || oldShapeCpot - tresh2 > shapeCpot) {
-      shapeC = analogRead(A4);
+      shapeC = mux11;
       oldShapeCpot = shapeCpot + tresh2 / 2;
       Serial.println("shape C turn");
     }
@@ -261,33 +261,33 @@ if (millis() - prevTimer > timer) {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //tuneB
-    tuneBpot = analogRead(A2);
+    tuneBpot = mux13;
     if (oldTuneBpot + tresh < tuneBpot || oldTuneBpot - tresh > tuneBpot) {
-      if (analogRead(A2) < 512) {
-        tuneB = ((float)analogRead(A2) / 1023) + 0.5;
+      if (mux13 < 512) {
+        tuneB = ((float)mux13 / 1023) + 0.5;
       } else {
-        tuneB = ((float)analogRead(A2) / 510);
+        tuneB = ((float)mux13 / 510);
       }
       oldTuneBpot = tuneBpot + tresh / 2;
       Serial.println("tuneB turn");
     }
 
     //tuneC
-    tuneCpot = analogRead(A3);
+    tuneCpot = mux12;
     if (oldTuneCpot + tresh < tuneCpot || oldTuneCpot - tresh > tuneCpot) {
-      if (analogRead(A3) < 512) {
-        tuneC = ((float)analogRead(A3) / 1023) + 0.5;
+      if (mux12 < 512) {
+        tuneC = ((float)mux12 / 1023) + 0.5;
       } else {
-        tuneC = ((float)analogRead(A3) / 510);
+        tuneC = ((float)mux12 / 510);
       }
       oldTuneCpot = tuneCpot + tresh / 2;
       Serial.println("tuneC turn");
     }
 
     //Cross mod
-    crossModpot = analogRead(A1);
+    crossModpot = mux14;
     if (oldCrossModpot + tresh < crossModpot || oldCrossModpot - tresh > crossModpot) {
-      crossMod = (float)analogRead(A1) / 512;
+      crossMod = (float)mux14 / 512;
       oldCrossModpot = crossModpot + tresh / 2;
       Serial.println("crossmod turn");
     }
@@ -298,31 +298,31 @@ if (millis() - prevTimer > timer) {
     ///////////// VOLUMES VOLUMES /////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    volApot = analogRead(A5);
+    volApot = mux10;
     if (oldVolApot + tresh2 < volApot || oldVolApot - tresh2 > volApot) {
-      vcoAvol = (float)analogRead(A5) / 1023;
+      vcoAvol = (float)mux10 / 1023;
       oldVolApot = volApot + tresh2 / 2;
       Serial.println("volA turn");
     }
 
 
-    volBpot = analogRead(A6);
+    volBpot = mux9;
     if (oldVolBpot + tresh2 < volBpot || oldVolBpot - tresh2 > volBpot) {
-      vcoBvol = (float)analogRead(A6) / 1023;
+      vcoBvol = (float)mux9 / 1023;
       oldVolBpot = volBpot + tresh2 / 2;
       Serial.println("volB turn");
     }
 
-    volCpot = analogRead(A7);
+    volCpot = mux8;
     if (oldVolCpot + tresh2 < volCpot || oldVolCpot - tresh2 > volCpot) {
-      vcoCvol = (float)analogRead(A7) / 1023;
+      vcoCvol = (float)mux8 / 1023;
       oldVolCpot = volCpot + tresh2 / 2;
       Serial.println("volC turn");
     }
 
-    volSubpot = analogRead(A21);
+    volSubpot = mux17;
     if (oldVolSubpot + tresh2 < volSubpot || oldVolSubpot - tresh2 > volSubpot) {
-      Subvol = (float)analogRead(A21) / 1023;
+      Subvol = (float)mux17 / 1023;
       oldVolSubpot = volSubpot + tresh2 / 2;
       Serial.println("vol sub turn");
     }
@@ -331,16 +331,16 @@ if (millis() - prevTimer > timer) {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Filter
-    cutpot = analogRead(A13);
+    cutpot = mux25;
     if (oldCutpot + tresh < cutpot || oldCutpot - tresh > cutpot) {
-      cut = 15000 * (float)analogRead(A13) / 1023 + 15;             /////cut
+      cut = 15000 * (float)mux25 / 1023 + 15;             /////cut
       oldCutpot = cutpot + tresh / 2;
       Serial.println("cut turn");
     }
 
-    respot = analogRead(A12);
+    respot = mux24;
     if (oldRespot + tresh2 < respot || oldRespot - tresh2 > respot) {
-      res = 4.5 * (float)analogRead(A12) / 1023 + 1.1;
+      res = 4.5 * (float)mux24 / 1023 + 1.1;
       oldRespot = respot + tresh2 / 2;
       Serial.println("res turn");
     }
@@ -371,15 +371,15 @@ if (millis() - prevTimer > timer) {
 
 
     //FilterMode
-    if (digitalRead(13) == 1) {
+    if (digitalRead(FILTER_MODE) == 1) {
       filtModesw = 1;
-    } else if (digitalRead(13) == 0) {
+    } else if (digitalRead(FILTER_MODE) == 0) {
       filtModesw = 0;
     }
     if (oldFiltModesw < filtModesw || oldFiltModesw > filtModesw) {
-      if (digitalRead(13) == 1) {
+      if (digitalRead(FILTER_MODE) == 1) {
         filterMode = 1;
-      } else if (digitalRead(13) == 0) {
+      } else if (digitalRead(FILTER_MODE) == 0) {
         filterMode = 0;
       }
       oldFiltModesw = filtModesw;
@@ -391,24 +391,24 @@ if (millis() - prevTimer > timer) {
     /////////////// MAIN ENVELOPE ENVELOPE ////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    attpot = analogRead(A25);
+    attpot = mux27;
     if (oldAttpot + tresh2 < attpot || oldAttpot - tresh2 > attpot) {
-      envAtt = 3000 * (float)analogRead(A25) / 1023;
+      envAtt = 3000 * (float)mux27 / 1023;
       oldAttpot = attpot + tresh2 / 2;
       Serial.println("Attack turn");
     }
 
-    decpot = analogRead(A26);
+    decpot = mux26;
     if (oldDecpot + tresh2 < decpot || oldDecpot - tresh2 > decpot) {
-      envDec = 5000 * (float)analogRead(A26) / 1023;
-      envRel = 5000 * (float)analogRead(A26) / 1023;
+      envDec = 5000 * (float)mux26 / 1023;
+      envRel = 5000 * (float)mux26 / 1023;
       oldDecpot = decpot + tresh2 / 2;
       Serial.println("Decay turn");
     }
 
-    suspot = analogRead(A10);
+    suspot = mux22;
     if (oldSuspot + tresh2 < suspot || oldSuspot - tresh2 > suspot) {
-      envSus = (float)analogRead(A10) / 100;
+      envSus = (float)mux22 / 100;
       oldSuspot = suspot + tresh2 / 2;
       Serial.println("Sustain turn");
     }
@@ -463,19 +463,19 @@ if (millis() - prevTimer > timer) {
 
 
     //lfoA destination
-    if (digitalRead(24) == 1) { //lfo - pitch
+    if (digitalRead(LFOA_DEST_1) == 1) { //lfo - pitch
       lfoDestsw = 0;
-    } else if ( digitalRead(24) == 0 && digitalRead(25) == 0) { //lfo - filter
+    } else if ( digitalRead(LFOA_DEST_1) == 0 && digitalRead(LFOA_DEST_2) == 0) { //lfo - filter
       lfoDestsw = 1;
-    } else if (digitalRead(25) == 1) { //lfo - amp
+    } else if (digitalRead(LFOA_DEST_2) == 1) { //lfo - amp
       lfoDestsw = 2;
     }
     if (oldLfoDestsw < lfoDestsw || oldLfoDestsw > lfoDestsw) {
-      if (digitalRead(24) == 1) { //lfo - pitch
+      if (digitalRead(LFOA_DEST_1) == 1) { //lfo - pitch
         lfoAdest = 0;
-      } else if ( digitalRead(24) == 0 && digitalRead(25) == 0) { //lfo - filter
+      } else if ( digitalRead(LFOA_DEST_1) == 0 && digitalRead(LFOA_DEST_2) == 0) { //lfo - filter
         lfoAdest = 1;
-      } else if (digitalRead(25) == 1) { //lfo - amp
+      } else if (digitalRead(LFOA_DEST_2) == 1) { //lfo - amp
         lfoAdest = 2;
       }
       oldLfoDestsw = lfoDestsw;
@@ -485,20 +485,20 @@ if (millis() - prevTimer > timer) {
 
 
     //lfoA shape
-    if (digitalRead(26) == 1) {
+    if (digitalRead(LFOA_SHAPE_1) == 1) {
       lfoShapesw = 0;
-    } else if ( digitalRead(26) == 0 && digitalRead(27) == 0) {
+    } else if ( digitalRead(LFOA_SHAPE_1) == 0 && digitalRead(LFOA_SHAPE_2) == 0) {
       lfoShapesw = 1;
-    } else if (digitalRead(27) == 1) {
+    } else if (digitalRead(LFOA_SHAPE_2) == 1) {
       lfoShapesw = 2;
     }
 
     if (oldLfoShapesw < lfoShapesw || oldLfoShapesw > lfoShapesw) {
-      if (digitalRead(26) == 1) {
+      if (digitalRead(LFOA_SHAPE_1) == 1) {
         lfoAshape = 0;
-      } else if ( digitalRead(26) == 0 && digitalRead(27) == 0) {
+      } else if ( digitalRead(LFOA_SHAPE_1) == 0 && digitalRead(LFOA_SHAPE_2) == 0) {
         lfoAshape = 1;
-      } else if (digitalRead(27) == 1) {
+      } else if (digitalRead(LFOA_SHAPE_2) == 1) {
         lfoAshape = 2;
       }
       oldLfoShapesw = lfoShapesw;
@@ -510,16 +510,16 @@ if (millis() - prevTimer > timer) {
     ///////////// LFO B    LFO B //////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    lfoBAmppot = analogRead(A14);
+    lfoBAmppot = mux15;
     if (oldLfoBAmppot + tresh2 < lfoBAmppot || oldLfoBAmppot - tresh2 > lfoBAmppot) {
-      lfoBamp = (float)analogRead(A14) / 1023;
+      lfoBamp = (float)mux15 / 1023;
       oldLfoBAmppot = lfoBAmppot + tresh2 / 2;
       Serial.println("Lfo B amp turn");
     }
 
-    lfoBFreqpot = analogRead(A22);
+    lfoBFreqpot = mux16;
     if (oldLfoBFreqpot + tresh2 < lfoBFreqpot || oldLfoBFreqpot - tresh2 > lfoBFreqpot) {
-      lfoBfreq = 5 * (float)analogRead(A22) / 1023 + 0.1;
+      lfoBfreq = 5 * (float)mux16 / 1023 + 0.1;
       oldLfoBFreqpot = lfoBFreqpot + tresh2 / 2;
       Serial.println("Lfo B freq turn");
     }
@@ -533,9 +533,9 @@ if (millis() - prevTimer > timer) {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Delay
-    dlyAmtpot = analogRead(A16);
+    dlyAmtpot = mux21;
     if (oldDlyAmtpot + tresh2 < dlyAmtpot || oldDlyAmtpot - tresh2 > dlyAmtpot) {
-      dlyAmt = (float)analogRead(A16) / 1100 - 0.1;
+      dlyAmt = (float)mux21 / 1100 - 0.1;
       if (dlyAmt < 0) {
         dlyAmt = 0;
       }
@@ -544,10 +544,10 @@ if (millis() - prevTimer > timer) {
     }
 
 
-    dlyTimepot = analogRead(A17);
+    dlyTimepot = mux20;
     if (oldDlyTimepot + tresh2 < dlyTimepot || oldDlyTimepot - tresh2 > dlyTimepot) {
-      dlyTimeL = analogRead(A17) / 2.5;
-      dlyTimeR = analogRead(A17) / 1.25;
+      dlyTimeL = mux20 / 2.5;
+      dlyTimeR = mux20 / 1.25;
       oldDlyTimepot = dlyTimepot + tresh2 / 2;
       Serial.println("Dly time turn");
     }
@@ -555,17 +555,17 @@ if (millis() - prevTimer > timer) {
 
 
     //Reverb
-    revMixpot = analogRead(A19);
+    revMixpot = mux18;
     if (oldRevMixpot + tresh2 < revMixpot || oldRevMixpot - tresh2 > revMixpot) {
-      revMix = ((float)analogRead(A19) / 1024 / 1.2);
+      revMix = ((float)mux18 / 1024 / 1.2);
       oldRevMixpot = revMixpot + tresh2 / 2;
       Serial.println("Rev mix turn");
     }
 
 
-    revSizepot = analogRead(A18);
+    revSizepot = mux19;
     if (oldRevSizepot + tresh2 < revSizepot || oldRevSizepot - tresh2 > revSizepot) {
-      revSize = ((float)analogRead(A18) / 1024 - 0.01);
+      revSize = ((float)mux19 / 1024 - 0.01);
       oldRevSizepot = revSizepot + tresh2 / 2;
       Serial.println("Rev size turn");
     }

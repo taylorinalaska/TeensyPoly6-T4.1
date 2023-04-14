@@ -19,39 +19,39 @@ void setup() {
 
 
   //Switches
-  pinMode(1, INPUT_PULLDOWN); //poly
-  pinMode(2, INPUT_PULLDOWN); //shape A
-  pinMode(3, INPUT_PULLDOWN); //shape A
-  pinMode(4, INPUT_PULLDOWN); //shabe B
-  pinMode(5, INPUT_PULLDOWN); //shape B
-  pinMode(6, INPUT_PULLDOWN); //main oct
-  pinMode(7, INPUT_PULLDOWN); //main oct
-  pinMode(8, INPUT_PULLDOWN); //oct B
-  pinMode(10, INPUT_PULLDOWN); //oct C
-  pinMode(11, INPUT_PULLDOWN); //oct C
-  pinMode(12, INPUT_PULLDOWN); //oct B
-  pinMode(13, INPUT_PULLDOWN); //filt Mode
+  pinMode(MONO_POLY, INPUT_PULLDOWN); //poly
+  pinMode(A_SHAPE_1, INPUT_PULLDOWN); //shape A
+  pinMode(A_SHAPE_2, INPUT_PULLDOWN); //shape A
+  pinMode(B_SHAPE_1, INPUT_PULLDOWN); //shabe B
+  pinMode(B_SHAPE_2, INPUT_PULLDOWN); //shape B
+  pinMode(MAIN_OCT_1, INPUT_PULLDOWN); //main oct
+  pinMode(MAIN_OCT_2, INPUT_PULLDOWN); //main oct
+  pinMode(B_OCTAVE_1, INPUT_PULLDOWN); //oct B
+  pinMode(B_OCTAVE_2, INPUT_PULLDOWN); //oct C
+  pinMode(C_OCTAVE_1, INPUT_PULLDOWN); //oct C
+  pinMode(C_OCTAVE_2, INPUT_PULLDOWN); //oct B
+  pinMode(FILTER_MODE, INPUT_PULLDOWN); //filt Mode
 
-  pinMode(24, INPUT_PULLDOWN); //lfo dest
-  pinMode(25, INPUT_PULLDOWN); //lfo dest
-  pinMode(26, INPUT_PULLDOWN); //lfo shape
-  pinMode(27, INPUT_PULLDOWN); //lfo shape
+  pinMode(LFOA_DEST_1, INPUT_PULLDOWN); //lfo dest
+  pinMode(LFOA_DEST_2, INPUT_PULLDOWN); //lfo dest
+  pinMode(LFOA_SHAPE_1, INPUT_PULLDOWN); //lfo shape
+  pinMode(LFOA_SHAPE_2, INPUT_PULLDOWN); //lfo shape
 
-  pinMode(44, INPUT_PULLDOWN); //
-  pinMode(45, INPUT_PULLDOWN); //
-  pinMode(46, INPUT_PULLDOWN); //
-  pinMode(48, INPUT_PULLDOWN); //
-  pinMode(49, INPUT_PULLDOWN); //
+  pinMode(SAVE1, INPUT_PULLDOWN); //
+  pinMode(SAVE2, INPUT_PULLDOWN); //
+  pinMode(SAVE3, INPUT_PULLDOWN); //
+  pinMode(SAVE4, INPUT_PULLDOWN); //
+  pinMode(SAVE5, INPUT_PULLDOWN); //
 
 
   //Mux setup
-  pinMode(28, OUTPUT);
-  pinMode(29, OUTPUT);
-  pinMode(30, OUTPUT);
+  pinMode(MUX1, OUTPUT);
+  pinMode(MUX2, OUTPUT);
+  pinMode(MUX3, OUTPUT);
 
-  digitalWrite(28, 0);
-  digitalWrite(29, 0);
-  digitalWrite(30, 0);
+  digitalWrite(MUX1, 0);
+  digitalWrite(MUX2, 0);
+  digitalWrite(MUX3, 0);
 
   adc->adc0->setAveraging(16); // set number of averages 0, 4, 8, 16 or 32.
   adc->adc0->setResolution(10); // set bits of resolution  8, 10, 12 or 16 bits.

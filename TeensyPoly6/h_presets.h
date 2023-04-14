@@ -2,7 +2,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////// PRESET 1 ////////////////////////////////////////////////////////////////
-if (digitalRead(44) == 1 && prevBtn1 == 0) {
+if (digitalRead(SAVE1) == 1 && prevBtn1 == 0) {
   //write params
   EEPROM.writeFloat(0, octave);
   EEPROM.writeFloat(5, octaveB);
@@ -48,12 +48,12 @@ if (digitalRead(44) == 1 && prevBtn1 == 0) {
 
   prevBtn1 = 1;
 
-} else if (digitalRead(44) == 0) {
+} else if (digitalRead(SAVE1) == 0) {
   prevBtn1 = 0;
 }
 
 ///////  PRESET 2 ///////////////////////////////////////////////////
-if (digitalRead(45) == 1 && prevBtn2 == 0) {
+if (digitalRead(SAVE2) == 1 && prevBtn2 == 0) {
   //write params
   EEPROM.writeFloat(200, octave);
   EEPROM.writeFloat(205, octaveB);
@@ -99,13 +99,13 @@ if (digitalRead(45) == 1 && prevBtn2 == 0) {
 
   prevBtn2 = 1;
 
-} else if (digitalRead(45) == 0) {
+} else if (digitalRead(SAVE2) == 0) {
   prevBtn2 = 0;
 }
 
 
 ///////// PRESET 3 ////////////////////////////////////////////////////////////////
-if (digitalRead(46) == 1 && prevBtn3 == 0) {
+if (digitalRead(SAVE3) == 1 && prevBtn3 == 0) {
   //write params
   EEPROM.writeFloat(400, octave);
   EEPROM.writeFloat(405, octaveB);
@@ -151,13 +151,13 @@ if (digitalRead(46) == 1 && prevBtn3 == 0) {
 
   prevBtn3 = 1;
 
-} else if (digitalRead(46) == 0) {
+} else if (digitalRead(SAVE3) == 0) {
   prevBtn3 = 0;
 }
 
 
 ///////// PRESET 4 ////////////////////////////////////////////////////////////////
-if (digitalRead(48) == 1 && prevBtn4 == 0) {
+if (digitalRead(SAVE4) == 1 && prevBtn4 == 0) {
   //write params
   EEPROM.writeFloat(600, octave);
   EEPROM.writeFloat(605, octaveB);
@@ -202,7 +202,7 @@ if (digitalRead(48) == 1 && prevBtn4 == 0) {
   Serial.println("save 4");
   prevBtn4 = 1;
 
-} else if (digitalRead(48) == 0) {
+} else if (digitalRead(SAVE4) == 0) {
   prevBtn4 = 0;
 }
 
@@ -210,7 +210,7 @@ if (digitalRead(48) == 1 && prevBtn4 == 0) {
 
 
 ///////// PRESET 5 ////////////////////////////////////////////////////////////////
-if (digitalRead(49) == 1 && prevBtn5 == 0) {
+if (digitalRead(SAVE5) == 1 && prevBtn5 == 0) {
   //write params
   EEPROM.writeFloat(800, octave);
   EEPROM.writeFloat(805, octaveB);
@@ -256,7 +256,7 @@ if (digitalRead(49) == 1 && prevBtn5 == 0) {
 
   prevBtn5 = 1;
 
-} else if (digitalRead(49) == 0) {
+} else if (digitalRead(SAVE5) == 0) {
   prevBtn5 = 0;
 }
 

@@ -303,6 +303,33 @@ int prevNote = 0;  //Initialised to middle value
 bool notes[88] = { 0 }, initial_loop = 1;
 int8_t noteOrder[40] = { 0 }, orderIndx = { 0 };
 
+#define MONO_POLY 17
+#define A_SHAPE_1 31
+#define A_SHAPE_2 15
+#define B_SHAPE_1 4
+#define B_SHAPE_2 5
+#define MAIN_OCT_1 6
+#define MAIN_OCT_2 7
+#define B_OCTAVE_1 8
+#define C_OCTAVE_1 32
+#define C_OCTAVE_2 39
+#define B_OCTAVE_2 16
+#define LFOA_SHAPE_1 24
+#define LFOA_SHAPE_2 25
+#define LFOA_DEST_1 26
+#define LFOA_DEST_2 27
+#define FILTER_MODE 37
+
+#define MUX1 28
+#define MUX2 29
+#define MUX3 30
+
+#define SAVE1 44
+#define SAVE2 45
+#define SAVE3 46
+#define SAVE4 48
+#define SAVE5 49
+
 #define MUXCHANNELS 8
 #define QUANTISE_FACTOR 7
 static byte muxInput = 0;
