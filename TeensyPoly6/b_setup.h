@@ -19,7 +19,8 @@ void setup() {
 
 
   //Switches
-  pinMode(MONO_POLY, INPUT_PULLDOWN); //poly
+  pinMode(MONO_POLY1, INPUT_PULLDOWN); //poly
+  pinMode(MONO_POLY2, INPUT_PULLDOWN); //poly
   pinMode(A_SHAPE_1, INPUT_PULLDOWN); //shape A
   pinMode(A_SHAPE_2, INPUT_PULLDOWN); //shape A
   pinMode(B_SHAPE_1, INPUT_PULLDOWN); //shabe B

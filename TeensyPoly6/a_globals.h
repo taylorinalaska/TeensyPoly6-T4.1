@@ -303,7 +303,8 @@ int prevNote = 0;  //Initialised to middle value
 bool notes[88] = { 0 }, initial_loop = 1;
 int8_t noteOrder[40] = { 0 }, orderIndx = { 0 };
 
-#define MONO_POLY 17
+#define MONO_POLY1 17
+#define MONO_POLY2 38
 #define A_SHAPE_1 31
 #define A_SHAPE_2 15
 #define B_SHAPE_1 4

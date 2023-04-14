@@ -36,7 +36,7 @@ int getVoiceNo(int note) {
 
 void myNoteOn(byte channel, byte note, byte velocity) {
 
-  if (digitalRead(1) == MONO_POLY) {  //POLYPHONIC mode
+  if (digitalRead(1) == MONO_POLY1) {  //POLYPHONIC mode
     if (note < 0 || note > 127) return;
     switch (getVoiceNo(-1)) {
       case 1:
@@ -107,7 +107,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 
 void myNoteOff(byte channel, byte note, byte velocity) {
 
-  if (digitalRead(MONO_POLY) == 1) {  //POLYPHONIC mode
+  if (digitalRead(MONO_POLY1) == 1) {  //POLYPHONIC mode
     switch (getVoiceNo(note)) {
       case 1:
         env1.noteOff();
