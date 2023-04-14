@@ -36,7 +36,7 @@ int getVoiceNo(int note) {
 
 void myNoteOn(byte channel, byte note, byte velocity) {
 
-  if (digitalRead(1) == MONO_POLY1) {  //POLYPHONIC mode
+  if (digitalRead(MONO_POLY1) == 0 && digitalRead(MONO_POLY2) == 0) {  //POLYPHONIC mode
     if (note < 0 || note > 127) return;
     switch (getVoiceNo(-1)) {
       case 1:
@@ -94,7 +94,54 @@ void myNoteOn(byte channel, byte note, byte velocity) {
         voiceOn[5] = true;
         break;
     }
-  } else {
+  }
+
+  if (digitalRead(MONO_POLY1) == 1 && digitalRead(MONO_POLY2) == 0) {  //UNISON mode
+    if (note < 0 || note > 127) return;
+    voices[0].note = note;
+    note1freq = note;
+    env1.noteOn();
+    filterEnv1.noteOn();
+    lfoAenv1.noteOn();
+    env1on = true;
+    voiceOn[0] = true;
+    voices[1].note = note;
+    note2freq = note;
+    env2.noteOn();
+    filterEnv2.noteOn();
+    lfoAenv2.noteOn();
+    env2on = true;
+    voiceOn[1] = true;
+    voices[2].note = note;
+    note3freq = note;
+    env3.noteOn();
+    filterEnv3.noteOn();
+    lfoAenv3.noteOn();
+    env3on = true;
+    voiceOn[2] = true;
+    voices[3].note = note;
+    note4freq = note;
+    env4.noteOn();
+    filterEnv4.noteOn();
+    lfoAenv4.noteOn();
+    env4on = true;
+    voiceOn[3] = true;
+    voices[4].note = note;
+    note5freq = note;
+    env5.noteOn();
+    filterEnv5.noteOn();
+    lfoAenv5.noteOn();
+    env5on = true;
+    voiceOn[4] = true;
+    voices[5].note = note;
+    note6freq = note;
+    env6.noteOn();
+    filterEnv6.noteOn();
+    lfoAenv6.noteOn();
+    env6on = true;
+    voiceOn[5] = true;
+  }
+  if (digitalRead(MONO_POLY1) == 0 && digitalRead(MONO_POLY2) == 1) {
     voices[0].note = note;
     note1freq = note;
     env1.noteOn();
@@ -107,7 +154,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 
 void myNoteOff(byte channel, byte note, byte velocity) {
 
-  if (digitalRead(MONO_POLY1) == 1) {  //POLYPHONIC mode
+  if (digitalRead(MONO_POLY1) == 0 && digitalRead(MONO_POLY2) == 0) {  //POLYPHONIC mode
     switch (getVoiceNo(note)) {
       case 1:
         env1.noteOff();
@@ -158,7 +205,53 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         voiceOn[5] = false;
         break;
     }
-  } else {
+  }
+
+  if (digitalRead(MONO_POLY1) == 1 && digitalRead(MONO_POLY2) == 0) {  //UNISON
+    env1.noteOff();
+    filterEnv1.noteOff();
+    lfoAenv1.noteOff();
+    env1on = false;
+    voices[0].note = -1;
+    voiceOn[0] = false;
+
+    env2.noteOff();
+    filterEnv2.noteOff();
+    lfoAenv2.noteOff();
+    env2on = false;
+    voices[1].note = -1;
+    voiceOn[1] = false;
+
+    env3.noteOff();
+    filterEnv3.noteOff();
+    lfoAenv3.noteOff();
+    env3on = false;
+    voices[2].note = -1;
+    voiceOn[2] = false;
+
+    env4.noteOff();
+    filterEnv4.noteOff();
+    lfoAenv4.noteOff();
+    env4on = false;
+    voices[3].note = -1;
+    voiceOn[3] = false;
+
+    env5.noteOff();
+    filterEnv5.noteOff();
+    lfoAenv5.noteOff();
+    env5on = false;
+    voices[4].note = -1;
+    voiceOn[4] = false;
+
+    env6.noteOff();
+    filterEnv6.noteOff();
+    lfoAenv6.noteOff();
+    env6on = false;
+    voices[5].note = -1;
+    voiceOn[5] = false;
+  }
+
+  if (digitalRead(MONO_POLY1) == 0 && digitalRead(MONO_POLY2) == 1) {
     env1.noteOff();
     filterEnv1.noteOff();
     lfoAenv1.noteOff();
@@ -166,5 +259,5 @@ void myNoteOff(byte channel, byte note, byte velocity) {
     voices[0].note = -1;
     voiceOn[0] = false;
   }
-}
 
+}
