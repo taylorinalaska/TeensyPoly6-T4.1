@@ -2,7 +2,7 @@ void checkMux() {
 
   mux1Read = adc->adc0->analogRead(muxPots1);
   mux2Read = adc->adc0->analogRead(muxPots2);
-  mux3Read = adc->adc1->analogRead(muxPots3);
+  mux3Read = adc->adc0->analogRead(muxPots3);
   mux4Read = adc->adc1->analogRead(muxPots4);
 
   if (mux1Read > (mux1ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux1Read < (mux1ValuesPrev[muxInput] - QUANTISE_FACTOR)) {

@@ -274,8 +274,8 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 const int muxPots1 = A15;
 const int muxPots2 = A14;
-const int muxPots3 = A16;
-const int muxPots4 = A17;
+const int muxPots3 = A21;
+const int muxPots4 = A22;
 
 float wait = 0; //mux read delay
 
@@ -330,6 +330,16 @@ int8_t noteOrder[40] = { 0 }, orderIndx = { 0 };
 #define SAVE3 46
 #define SAVE4 48
 #define SAVE5 49
+
+#define DEBOUNCE 30
+#define RECALL_SW 18
+#define SAVE_SW 19
+#define SETTINGS_SW 21
+#define BACK_SW 20
+
+#define ENCODER_PINA 35
+#define ENCODER_PINB 36
+static long encPrevious = 0;
 
 #define MUXCHANNELS 8
 #define QUANTISE_FACTOR 7

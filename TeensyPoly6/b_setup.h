@@ -1,9 +1,21 @@
 #include "i_noteOn.h"
 #include <ADC.h>
 #include <ADC_util.h>
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#include <Encoder.h>
+#include <Bounce.h>
 
 ADC *adc = new ADC();
 
+Bounce recallButton = Bounce(RECALL_SW, DEBOUNCE); //On encoder
+boolean recall = true; //Hack for recall button
+Bounce saveButton = Bounce(SAVE_SW, DEBOUNCE);
+boolean del = true; //Hack for save button
+Bounce settingsButton = Bounce(SETTINGS_SW, DEBOUNCE);
+boolean reini = true; //Hack for settings button
+Bounce backButton = Bounce(BACK_SW, DEBOUNCE);
+boolean panic = true; //Hack for back button
+Encoder encoder(ENCODER_PINB, ENCODER_PINA);//This often needs the pins swapping depending on the encoder
 
 void setup() {
   Serial.begin(9600);
@@ -44,6 +56,10 @@ void setup() {
   pinMode(SAVE4, INPUT_PULLDOWN); //
   pinMode(SAVE5, INPUT_PULLDOWN); //
 
+  pinMode(RECALL_SW, INPUT_PULLUP); //On encoder
+  pinMode(SAVE_SW, INPUT_PULLUP);
+  pinMode(SETTINGS_SW, INPUT_PULLUP);
+  pinMode(BACK_SW, INPUT_PULLUP);
 
   //Mux setup
   pinMode(MUX1, OUTPUT);
