@@ -1,12 +1,12 @@
-if (millis() - prevTimer > timer) {
+void updateParams() {
 
   mainVol = (float)mux23 / 1024;
   //preset = analogRead(A24) / 190;
-  preset = 0;
+  preset = 1;
 
   //bend = 1 + ((float)analogRead(A0) / 1023 / 4.3) - 0.12;
   bend = 0.5;
-  Serial.println(bend);
+  //Serial.println(bend);
 
 
   //main octave
@@ -17,7 +17,6 @@ if (millis() - prevTimer > timer) {
   } else if (digitalRead(MAIN_OCT_2) == 1) {
     octave = 2;
   }
-
 
 
 
@@ -106,6 +105,7 @@ if (millis() - prevTimer > timer) {
     lfoAdec = 4000 * (float)mux6 / 1024;
     lfoArel = 4000 * (float)mux6 / 1024;
     lfoAsus = (float)mux7 / 1024;
+    //lfoAsus = (float)mux7;
 
     if (digitalRead(LFOA_DEST_1) == 1) { //lfo - pitch
       lfoAdest = 0;

@@ -1,8 +1,3 @@
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
 AudioSynthWaveform       lfoA1;      //xy=153.9333610534668,214.64774894714355
@@ -266,7 +261,6 @@ AudioConnection          patchCord152(fxR, 0, i2s1, 1);
 
 
 #include <MIDI.h>
-#include <EEPROMex.h>
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
@@ -279,7 +273,32 @@ const int muxPots4 = A22;
 
 float wait = 0; //mux read delay
 
+#define PARAMETER 0      //The main page for displaying the current patch and control (parameter) changes
+#define RECALL 1         //Patches list
+#define SAVE 2           //Save patch page
+#define REINITIALISE 3   // Reinitialise message
+#define PATCH 4          // Show current patch bypassing PARAMETER
+#define PATCHNAMING 5    // Patch naming page
+#define DELETE 6         //Delete patch page
+#define DELETEMSG 7      //Delete patch message page
+#define SETTINGS 8       //Settings page
+#define SETTINGSVALUE 9  //Settings page
+
+
+boolean encCW = true;//This is to set the encoder to increment when turned CW - Settings Option
+const char* VERSION = "V1.4";
+#define RE_READ -9
+#define NO_OF_PARAMS 60
+const char* INITPATCHNAME = "Initial Patch";
+#define HOLD_DURATION 1000
+#define PATCHES_LIMIT 999
+const String INITPATCH = "Solina,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1";
+String patchName = INITPATCHNAME;
+int patchNo = 1;
+unsigned int state = PARAMETER;
 #define NO_OF_VOICES 6
+byte midiChannel = MIDI_CHANNEL_OMNI;//(EEPROM)
+
 int voiceToReturn = -1;        //Initialise
 long earliestTime = millis();  //For voice allocation - initialise to now
 
@@ -303,90 +322,6 @@ int prevNote = 0;  //Initialised to middle value
 bool notes[88] = { 0 }, initial_loop = 1;
 int8_t noteOrder[40] = { 0 }, orderIndx = { 0 };
 
-#define MONO_POLY1 17
-#define MONO_POLY2 38
-#define A_SHAPE_1 31
-#define A_SHAPE_2 15
-#define B_SHAPE_1 4
-#define B_SHAPE_2 5
-#define MAIN_OCT_1 6
-#define MAIN_OCT_2 7
-#define B_OCTAVE_1 8
-#define C_OCTAVE_1 32
-#define C_OCTAVE_2 39
-#define B_OCTAVE_2 16
-#define LFOA_SHAPE_1 24
-#define LFOA_SHAPE_2 25
-#define LFOA_DEST_1 26
-#define LFOA_DEST_2 27
-#define FILTER_MODE 37
-
-#define MUX1 28
-#define MUX2 29
-#define MUX3 30
-
-#define SAVE1 44
-#define SAVE2 45
-#define SAVE3 46
-#define SAVE4 48
-#define SAVE5 49
-
-#define DEBOUNCE 30
-#define RECALL_SW 18
-#define SAVE_SW 19
-#define SETTINGS_SW 21
-#define BACK_SW 20
-
-#define ENCODER_PINA 35
-#define ENCODER_PINB 36
-static long encPrevious = 0;
-
-#define MUXCHANNELS 8
-#define QUANTISE_FACTOR 7
-static byte muxInput = 0;
-
-static int mux1ValuesPrev[MUXCHANNELS] = {};
-static int mux2ValuesPrev[MUXCHANNELS] = {};
-static int mux3ValuesPrev[MUXCHANNELS] = {};
-static int mux4ValuesPrev[MUXCHANNELS] = {};
-
-static int mux1Read = 0;
-static int mux2Read = 0;
-static int mux3Read = 0;
-static int mux4Read = 0;
-
-int mux0;
-int mux1;
-int mux2;
-int mux3;
-int mux4;
-int mux5;
-int mux6;
-int mux7;
-int mux8;
-int mux9;
-int mux10;
-int mux11;
-int mux12;
-int mux13;
-int mux14;
-int mux15;
-int mux16;
-int mux17;
-int mux18;
-int mux19;
-int mux20;
-int mux21;
-int mux22;
-int mux23;
-int mux24;
-int mux25;
-int mux26;
-int mux27;
-int mux28;
-int mux29;
-int mux30;
-int mux31;
 
 ///// notes, frequencies, voices /////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -400,9 +335,6 @@ int note5freq;
 int note6freq;
 
 //int voices;
-
-
-
 
 
 //checks if notes are on or not
