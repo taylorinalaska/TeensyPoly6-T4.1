@@ -1,4 +1,4 @@
-void checkMux() {
+FLASHMEM void checkMux() {
 
   mux1Read = adc->adc0->analogRead(muxPots1);
   mux2Read = adc->adc0->analogRead(muxPots2);

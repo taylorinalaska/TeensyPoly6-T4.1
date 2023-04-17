@@ -1,4 +1,4 @@
-#define ENCODER_OPTIMIZE_INTERRUPTS
+//#define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
 #include <Bounce.h>
 #include <ADC.h>
@@ -26,12 +26,6 @@ ADC *adc = new ADC();
 #define MUX1 28
 #define MUX2 29
 #define MUX3 30
-
-#define SAVE1 44
-#define SAVE2 45
-#define SAVE3 46
-#define SAVE4 48
-#define SAVE5 49
 
 #define DEBOUNCE 30
 #define RECALL_SW 18
@@ -120,12 +114,6 @@ void setupHardware() {
   pinMode(LFOA_DEST_2, INPUT_PULLDOWN);   //lfo dest
   pinMode(LFOA_SHAPE_1, INPUT_PULLDOWN);  //lfo shape
   pinMode(LFOA_SHAPE_2, INPUT_PULLDOWN);  //lfo shape
-
-  pinMode(SAVE1, INPUT_PULLDOWN);  //
-  pinMode(SAVE2, INPUT_PULLDOWN);  //
-  pinMode(SAVE3, INPUT_PULLDOWN);  //
-  pinMode(SAVE4, INPUT_PULLDOWN);  //
-  pinMode(SAVE5, INPUT_PULLDOWN);  //
 
   pinMode(RECALL_SW, INPUT_PULLUP);  //On encoder
   pinMode(SAVE_SW, INPUT_PULLUP);

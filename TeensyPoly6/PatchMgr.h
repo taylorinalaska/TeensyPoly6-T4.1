@@ -35,7 +35,7 @@ struct PatchNoAndName
 
 CircularBuffer<PatchNoAndName, PATCHES_LIMIT> patches;
 
-size_t readField(File *file, char *str, size_t size, const char *delim)
+FLASHMEM size_t readField(File *file, char *str, size_t size, const char *delim)
 {
   char ch;
   size_t n = 0;
@@ -56,7 +56,7 @@ size_t readField(File *file, char *str, size_t size, const char *delim)
   return n;
 }
 
-void recallPatchData(File patchFile, String data[])
+FLASHMEM void recallPatchData(File patchFile, String data[])
 {
   //Read patch data from file and set current patch parameters
   size_t n;     // Length of returned field with delimiter.
@@ -87,11 +87,11 @@ void recallPatchData(File patchFile, String data[])
   }
 }
 
-int compare(const void *a, const void *b) {
+FLASHMEM int compare(const void *a, const void *b) {
   return ((PatchNoAndName*)a)->patchNo - ((PatchNoAndName*)b)->patchNo;
 }
 
-void sortPatches()
+FLASHMEM void sortPatches()
 {
   int arraySize = patches.size();
   //Sort patches buffer to be consecutive ascending patchNo order
@@ -110,7 +110,7 @@ void sortPatches()
   }
 }
 
-void loadPatches()
+FLASHMEM void loadPatches()
 {
   File file = SD.open("/");
   patches.clear();
@@ -137,7 +137,7 @@ void loadPatches()
   sortPatches();
 }
 
-void savePatch(const char *patchNo, String patchData)
+FLASHMEM void savePatch(const char *patchNo, String patchData)
 {
   // Serial.print("savePatch Patch No:");
   //  Serial.println(patchNo);
@@ -162,7 +162,7 @@ void savePatch(const char *patchNo, String patchData)
   }
 }
 
-void savePatch(const char *patchNo, String patchData[])
+FLASHMEM void savePatch(const char *patchNo, String patchData[])
 {
   String dataString = patchData[0];
   for (int i = 1; i < NO_OF_PARAMS; i++)
@@ -172,12 +172,12 @@ void savePatch(const char *patchNo, String patchData[])
   savePatch(patchNo, dataString);
 }
 
-void deletePatch(const char *patchNo)
+FLASHMEM void deletePatch(const char *patchNo)
 {
   if (SD.exists(patchNo)) SD.remove(patchNo);
 }
 
-void renumberPatchesOnSD() {
+FLASHMEM void renumberPatchesOnSD() {
   for (int i = 0; i < patches.size(); i++)
   {
     String data[NO_OF_PARAMS]; //Array of data read in
@@ -191,14 +191,14 @@ void renumberPatchesOnSD() {
   deletePatch(String(patches.size() + 1).c_str()); //Delete final patch which is duplicate of penultimate patch
 }
 
-void setPatchesOrdering(int no) {
+FLASHMEM void setPatchesOrdering(int no) {
   if (patches.size() < 2)return;
   while (patches.first().patchNo != no) {
     patches.push(patches.shift());
   }
 }
 
-void resetPatchesOrdering() {
+FLASHMEM void resetPatchesOrdering() {
   setPatchesOrdering(1);
 }
 

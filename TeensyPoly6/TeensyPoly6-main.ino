@@ -1,11 +1,28 @@
+/*
+  poly6 programmer- Firmware Rev 1.2
+
+  Includes code by:
+    Dave Benn - Handling MUXs, a few other bits and original inspiration  https://www.notesandvolts.com/2019/01/teensy-synth-part-10-hardware.html
+
+  Arduino IDE
+  Tools Settings:
+  Board: "Teensy3.5"
+  USB Type: "Serial + MIDI + Audio"
+  CPU Speed: "180"
+  Optimize: "Fastest"
+
+  Additional libraries:
+    Agileware CircularBuffer available in Arduino libraries manager
+    Replacement files are in the Modified Libraries folder and need to be placed in the teensy Audio folder.
+*/
 #include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <SD.h>
+#include <Wire.h>
 #include <SerialFlash.h>
+#include <MIDI.h>
+
 #include "a_globals.h"
 #include "Hardware.h"
-
 #include "f_mux.h"
 #include "g_params.h"
 #include "PatchMgr.h"
@@ -13,24 +30,51 @@
 #include "Settings.h"
 #include "i_noteOn.h"
 
+#define PARAMETER 0      //The main page for displaying the current patch and control (parameter) changes
+#define RECALL 1         //Patches list
+#define SAVE 2           //Save patch page
+#define REINITIALISE 3   // Reinitialise message
+#define PATCH 4          // Show current patch bypassing PARAMETER
+#define PATCHNAMING 5    // Patch naming page
+#define DELETE 6         //Delete patch page
+#define DELETEMSG 7      //Delete patch message page
+#define SETTINGS 8       //Settings page
+#define SETTINGSVALUE 9  //Settings page
+
+unsigned int state = PARAMETER;
+
 #include "ST7735Display.h"
-//boolean encCW = true;
+
 boolean cardStatus = false;
 
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+
+
 void setup() {
-  Serial.begin(9600);
   AudioMemory(470);
+  SPI.begin();
+  setupDisplay();
+
+
+  //Read MIDI Channel from EEPROM
+  midiChannel = getMIDIChannel();
+  Serial.println("MIDI Ch:" + String(midiChannel) + " (0 is Omni On)");
 
   //Midi setup
-  usbMIDI.begin();
-  usbMIDI.setHandleNoteOn(myNoteOn);
-  usbMIDI.setHandleNoteOff(myNoteOff);
+  // usbMIDI.begin();
+  // usbMIDI.setHandleNoteOn(myNoteOn);
+  // usbMIDI.setHandleNoteOff(myNoteOff);
+  // usbMIDI.setHandlePitchChange(myPitchBend);
+  // usbMIDI.setHandleProgramChange(myProgramChange);
+
   MIDI.setHandleNoteOn(myNoteOn);
   MIDI.setHandleNoteOff(myNoteOff);
-  MIDI.begin(MIDI_CHANNEL_OMNI);
+  MIDI.setHandlePitchBend(myPitchBend);
+  MIDI.setHandleProgramChange(myProgramChange);
+  MIDI.setHandleControlChange(myControlChange);
+  MIDI.setHandleAfterTouchChannel(myAfterTouch);
+  MIDI.begin(midiChannel);
 
-  setupDisplay();
-  delay(1500);
   setupHardware();
 
   cardStatus = SD.begin(BUILTIN_SDCARD);
@@ -49,7 +93,11 @@ void setup() {
     showPatchPage("No SD", "conn'd / usable");
   }
 
+  //Read Encoder Direction from EEPROM
+  encCW = getEncoderDir();
   recallPatch(patchNo);  //Load first patch
+  //reinitialiseToPanel();
+  updateScreen();
 
   //vco setup
   vcoA1.begin(vcoVol, 150, WAVEFORM_SAWTOOTH);
@@ -188,7 +236,32 @@ void setup() {
   patchCord45.disconnect();  //filter
 }
 
-void recallPatch(int patchNo) {
+void myPitchBend(byte channel, int pitch) {
+  newpitchbend = (pitch + 8192) / 16;
+}
+
+void myControlChange(byte channel, byte control, int value) {
+  switch (control) {
+
+    case CCmodwheel:
+      midiMod = (value << 3);
+      //Serial.println(lfoAmppot);
+      break;
+  }
+}
+
+void myAfterTouch(byte channel, byte value) {
+  midiMod = (value << 3);
+}
+
+FLASHMEM void myProgramChange(byte channel, byte program) {
+  state = PATCH;
+  patchNo = program + 1;
+  recallPatch(patchNo);
+  state = PARAMETER;
+}
+
+FLASHMEM void recallPatch(int patchNo) {
   //allNotesOff();
   File patchFile = SD.open(String(patchNo).c_str());
   if (!patchFile) {
@@ -199,11 +272,11 @@ void recallPatch(int patchNo) {
     setCurrentPatchData(data);
     patchFile.close();
   }
-  renderCurrentPatchPage();
-  updateScreen();
+  //  renderCurrentPatchPage();
+  //  updateScreen();
 }
 
-void reinitialiseToPanel() {
+FLASHMEM void reinitialiseToPanel() {
   //This sets the current patch to be the same as the current hardware panel state - all the pots
   //The four button controls stay the same state
   //This reinialises the previous hardware values to force a re-read
@@ -218,7 +291,7 @@ void reinitialiseToPanel() {
   showPatchPage("Initial", "Panel Settings");
 }
 
-void setCurrentPatchData(String data[]) {
+FLASHMEM void setCurrentPatchData(String data[]) {
   patchName = data[0];
   octave = data[1].toFloat();
   octaveB = data[2].toFloat();
@@ -267,12 +340,15 @@ void setCurrentPatchData(String data[]) {
   Serial.println(patchName);
 }
 
-String getCurrentPatchData() {
+FLASHMEM String getCurrentPatchData() {
   return patchName + "," + String(octave) + "," + String(octaveB) + "," + String(octaveC) + "," + String(shapeA) + "," + String(shapeB) + "," + String(shapeC) + "," + String(tuneB) + "," + String(tuneC) + "," + String(crossMod) + "," + String(vcoAvol) + "," + String(vcoBvol) + "," + String(vcoCvol) + "," + String(Subvol) + "," + String(cut) + "," + String(res) + "," + String(filtAtt) + "," + String(filtDec) + "," + String(filtAmt) + "," + String(filterMode) + "," + String(envAtt) + "," + String(envDec) + "," + String(envRel) + "," + String(envSus) + "," + String(lfoAamp) + "," + String(lfoAfreq) + "," + String(lfoAdel) + "," + String(lfoAatt) + "," + String(lfoAdec) + "," + String(lfoArel) + "," + String(lfoAsus) + "," + String(lfoBamp) + "," + String(lfoBfreq) + "," + String(dlyAmt) + "," + String(dlyTimeL) + "," + String(dlyTimeR) + "," + String(revMix) + "," + String(revSize) + "," + String(lfoAdest) + "," + String(lfoAshape);
 }
 
 void updatePatchname() {
   showPatchPage(String(patchNo), patchName);
+}
+
+void allNotesOff() {
 }
 
 void checkSwitches() {
@@ -285,6 +361,7 @@ void checkSwitches() {
         state = DELETE;
         saveButton.write(HIGH);  //Come out of this state
         del = true;              //Hack
+        updateScreen();
         break;
     }
   } else if (saveButton.risingEdge()) {
@@ -295,12 +372,14 @@ void checkSwitches() {
             resetPatchesOrdering();  //Reset order of patches from first patch
             patches.push({ patches.size() + 1, INITPATCHNAME });
             state = SAVE;
+            updateScreen();
           }
           break;
         case SAVE:
           //Save as new patch with INITIALPATCH name or overwrite existing keeping name - bypassing patch renaming
           patchName = patches.last().patchName;
           state = PATCH;
+          updateScreen();
           savePatch(String(patches.last().patchNo).c_str(), getCurrentPatchData());
           showPatchPage(patches.last().patchNo, patches.last().patchName);
           patchNo = patches.last().patchNo;
@@ -308,10 +387,13 @@ void checkSwitches() {
           setPatchesOrdering(patchNo);
           renamedPatch = "";
           state = PARAMETER;
+          updateScreen();
+
           break;
         case PATCHNAMING:
           if (renamedPatch.length() > 0) patchName = renamedPatch;  //Prevent empty strings
           state = PATCH;
+          updateScreen();
           savePatch(String(patches.last().patchNo).c_str(), getCurrentPatchData());
           showPatchPage(patches.last().patchNo, patchName);
           patchNo = patches.last().patchNo;
@@ -319,6 +401,7 @@ void checkSwitches() {
           setPatchesOrdering(patchNo);
           renamedPatch = "";
           state = PARAMETER;
+          updateScreen();
           break;
       }
     } else {
@@ -332,8 +415,9 @@ void checkSwitches() {
     //Reinitialise all hardware values to force them to be re-read if different
     state = REINITIALISE;
     reinitialiseToPanel();
-    settingsButton.write(HIGH);              //Come out of this state
-    reini = true;                            //Hack
+    settingsButton.write(HIGH);  //Come out of this state
+    reini = true;
+    updateScreen();                          //Hack
   } else if (settingsButton.risingEdge()) {  //cannot be fallingEdge because holding button won't work
     if (!reini) {
       switch (state) {
@@ -341,6 +425,7 @@ void checkSwitches() {
           settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
           showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
           state = SETTINGS;
+          updateScreen();
           break;
         case SETTINGS:
           settingsOptions.push(settingsOptions.shift());
@@ -351,6 +436,7 @@ void checkSwitches() {
           settingsHandler(settingsOptions.first().value[settingsValueIndex], settingsOptions.first().handler);
           showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
           state = SETTINGS;
+          updateScreen();
           break;
       }
     } else {
@@ -361,7 +447,7 @@ void checkSwitches() {
   backButton.update();
   if (backButton.read() == LOW && backButton.duration() > HOLD_DURATION) {
     //If Back button held, Panic - all notes off
-    //allNotesOff();
+    allNotesOff();
     backButton.write(HIGH);              //Come out of this state
     panic = true;                        //Hack
   } else if (backButton.risingEdge()) {  //cannot be fallingEdge because holding button won't work
@@ -370,30 +456,35 @@ void checkSwitches() {
         case RECALL:
           setPatchesOrdering(patchNo);
           state = PARAMETER;
+          updateScreen();
           break;
         case SAVE:
           renamedPatch = "";
           state = PARAMETER;
           loadPatches();  //Remove patch that was to be saved
           setPatchesOrdering(patchNo);
+          updateScreen();
           break;
         case PATCHNAMING:
           charIndex = 0;
           renamedPatch = "";
           state = SAVE;
+          updateScreen();
           break;
         case DELETE:
           setPatchesOrdering(patchNo);
           state = PARAMETER;
           break;
-          case SETTINGS:
-            state = PARAMETER;
-            break;
-          case SETTINGSVALUE:
-            settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-            showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
-            state = SETTINGS;
-            break;
+        case SETTINGS:
+          state = PARAMETER;
+          updateScreen();
+          break;
+        case SETTINGSVALUE:
+          settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
+          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+          state = SETTINGS;
+          updateScreen();
+          break;
       }
     } else {
       panic = false;
@@ -409,6 +500,7 @@ void checkSwitches() {
     //Recall the current patch
     patchNo = patches.first().patchNo;
     recallPatch(patchNo);
+    updateScreen();
     state = PARAMETER;
     recallButton.write(HIGH);  //Come out of this state
     recall = true;             //Hack
@@ -417,6 +509,7 @@ void checkSwitches() {
       switch (state) {
         case PARAMETER:
           state = RECALL;  //show patch list
+          updateScreen();
           break;
         case RECALL:
           state = PATCH;
@@ -424,11 +517,13 @@ void checkSwitches() {
           patchNo = patches.first().patchNo;
           recallPatch(patchNo);
           state = PARAMETER;
+          updateScreen();
           break;
         case SAVE:
           showRenamingPage(patches.last().patchName);
           patchName = patches.last().patchName;
           state = PATCHNAMING;
+          updateScreen();
           break;
         case PATCHNAMING:
           if (renamedPatch.length() < 13) {
@@ -436,6 +531,7 @@ void checkSwitches() {
             charIndex = 0;
             currentCharacter = CHARACTERS[charIndex];
             showRenamingPage(renamedPatch);
+            updateScreen();
           }
           break;
         case DELETE:
@@ -450,21 +546,25 @@ void checkSwitches() {
             loadPatches();                      //Repopulate circular buffer again after delete
             patchNo = patches.first().patchNo;  //Go back to 1
             recallPatch(patchNo);               //Load first patch
+            updateScreen();
           }
           state = PARAMETER;
+          updateScreen();
           break;
-          case SETTINGS:
-            //Choose this option and allow value choice
-            settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-            showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGSVALUE);
-            state = SETTINGSVALUE;
-            break;
-          case SETTINGSVALUE:
-            //Store current settings item and go back to options
-            settingsHandler(settingsOptions.first().value[settingsValueIndex], settingsOptions.first().handler);
-            showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
-            state = SETTINGS;
-            break;
+        case SETTINGS:
+          //Choose this option and allow value choice
+          settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
+          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGSVALUE);
+          state = SETTINGSVALUE;
+          updateScreen();
+          break;
+        case SETTINGSVALUE:
+          //Store current settings item and go back to options
+          settingsHandler(settingsOptions.first().value[settingsValueIndex], settingsOptions.first().handler);
+          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+          state = SETTINGS;
+          updateScreen();
+          break;
       }
     } else {
       recall = false;
@@ -485,29 +585,36 @@ void checkEncoder() {
         patchNo = patches.first().patchNo;
         recallPatch(patchNo);
         state = PARAMETER;
+        updateScreen();
         break;
       case RECALL:
         patches.push(patches.shift());
+        updateScreen();
         break;
       case SAVE:
         patches.push(patches.shift());
+        updateScreen();
         break;
       case PATCHNAMING:
         if (charIndex == TOTALCHARS) charIndex = 0;  //Wrap around
         currentCharacter = CHARACTERS[charIndex++];
         showRenamingPage(renamedPatch + currentCharacter);
+        updateScreen();
         break;
       case DELETE:
         patches.push(patches.shift());
+        updateScreen();
         break;
       case SETTINGS:
         settingsOptions.push(settingsOptions.shift());
         settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
         showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+        updateScreen();
         break;
       case SETTINGSVALUE:
         if (settingsOptions.first().value[settingsValueIndex + 1] != '\0')
           showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[++settingsValueIndex], SETTINGSVALUE);
+        updateScreen();
         break;
     }
     encPrevious = encRead;
@@ -519,30 +626,37 @@ void checkEncoder() {
         patchNo = patches.first().patchNo;
         recallPatch(patchNo);
         state = PARAMETER;
+        updateScreen();
         break;
       case RECALL:
         patches.unshift(patches.pop());
+        updateScreen();
         break;
       case SAVE:
         patches.unshift(patches.pop());
+        updateScreen();
         break;
       case PATCHNAMING:
         if (charIndex == -1)
           charIndex = TOTALCHARS - 1;
         currentCharacter = CHARACTERS[charIndex--];
         showRenamingPage(renamedPatch + currentCharacter);
+        updateScreen();
         break;
       case DELETE:
         patches.unshift(patches.pop());
+        updateScreen();
         break;
       case SETTINGS:
         settingsOptions.unshift(settingsOptions.pop());
         settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
         showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+        updateScreen();
         break;
       case SETTINGSVALUE:
         if (settingsValueIndex > 0)
           showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[--settingsValueIndex], SETTINGSVALUE);
+        updateScreen();
         break;
     }
     encPrevious = encRead;
@@ -556,7 +670,7 @@ void loop() {
   checkSwitches();
   checkEncoder();
 
-  usbMIDI.read();
+  //usbMIDI.read();
   MIDI.read();
 
   //cross mod

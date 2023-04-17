@@ -258,11 +258,9 @@ AudioConnection          patchCord151(fxL, 0, i2s1, 0);
 AudioConnection          patchCord152(fxR, 0, i2s1, 1);
 // GUItool: end automatically generated code
 
-
-
-#include <MIDI.h>
-
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+// CC numbers
+#define CCmodwheel 1
+int midiMod = 0;
 
 //////// Multiplexer //////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,18 +270,6 @@ const int muxPots3 = A21;
 const int muxPots4 = A22;
 
 float wait = 0; //mux read delay
-
-#define PARAMETER 0      //The main page for displaying the current patch and control (parameter) changes
-#define RECALL 1         //Patches list
-#define SAVE 2           //Save patch page
-#define REINITIALISE 3   // Reinitialise message
-#define PATCH 4          // Show current patch bypassing PARAMETER
-#define PATCHNAMING 5    // Patch naming page
-#define DELETE 6         //Delete patch page
-#define DELETEMSG 7      //Delete patch message page
-#define SETTINGS 8       //Settings page
-#define SETTINGSVALUE 9  //Settings page
-
 
 boolean encCW = true;//This is to set the encoder to increment when turned CW - Settings Option
 const char* VERSION = "V1.4";
@@ -295,7 +281,7 @@ const char* INITPATCHNAME = "Initial Patch";
 const String INITPATCH = "Solina,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1,1,1,10,1,1,1,1,1,1,1";
 String patchName = INITPATCHNAME;
 int patchNo = 1;
-unsigned int state = PARAMETER;
+
 #define NO_OF_VOICES 6
 byte midiChannel = MIDI_CHANNEL_OMNI;//(EEPROM)
 
@@ -322,6 +308,16 @@ int prevNote = 0;  //Initialised to middle value
 bool notes[88] = { 0 }, initial_loop = 1;
 int8_t noteOrder[40] = { 0 }, orderIndx = { 0 };
 
+byte AfterTouchDest = 0;
+byte modWheelDepth = 0;
+byte NotePriority = 1;
+byte FilterLoop = 0;
+byte AmpLoop = 0;
+byte ClockSource = 0;
+byte afterTouchDepth = 0;
+byte filterLogLin = 0;
+byte ampLogLin = 0;
+float newpitchbend = 0;
 
 ///// notes, frequencies, voices /////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -443,30 +439,15 @@ float revSize;
 
 //Presets
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-int preset;
-
-bool prevBtn1;
-bool prevBtn2;
-bool prevBtn3;
-bool prevBtn4;
-bool prevBtn5;
-
-bool presetLoaded1;
-bool presetLoaded2;
-bool presetLoaded3;
-bool presetLoaded4;
-bool presetLoaded5;
-
-
-
+int preset = 1;
 
 //turncheck
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 float tresh = 10;
 float tresh2 = 20;
 
-int timer = 6;
-unsigned long prevTimer;
+//int timer = 6;
+//unsigned long prevTimer;
 
 
 int tuneBpot;
@@ -557,7 +538,7 @@ int oldRevSizepot;
 
 //28 WAVEFORMS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-const int16_t wave1[257] = {
+FLASHMEM const int16_t wave1[257] = {
   652,  3250,  5203,  6105,  7141,  8326,  9440, 11564, 14886,
   17802, 20629, 24021, 27018, 27807, 27521, 26708, 25875, 25093, 25204,
   24485, 23202, 21859, 21177, 19946, 19560, 19924, 19937, 18705, 18559,
@@ -588,7 +569,7 @@ const int16_t wave1[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0002.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave2[257] = {
+FLASHMEM const int16_t wave2[257] = {
   662,  2669,  4281,  4921,  4187,  3449,  4710,  9132, 17294,
   26171, 31128, 32341, 32178, 31735, 31851, 32367, 32748, 32448, 30507,
   27918, 26072, 24015, 21743, 20690, 21355, 22669, 22394, 20138, 17846,
@@ -619,7 +600,7 @@ const int16_t wave2[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0003.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave3[257] = {
+FLASHMEM const int16_t wave3[257] = {
   1016,  4415,  4062,  7242, 11058, 18522, 20907, 22072, 19380,
   13565, 16266, 19674, 25523, 22687, 21946, 17405, 16743, 20787, 23805,
   27758, 27012, 29051, 25332, 27275, 26313, 26091, 28699, 29422, 32767,
@@ -650,7 +631,7 @@ const int16_t wave3[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0004.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave4[257] = {
+FLASHMEM const int16_t wave4[257] = {
   -2375, 14199, 14887, 10872,  7574,  6332,  9717, 13042, 17901,
   19781, 25384, 28871, 32443, 29227, 26211, 25189, 27834, 27062, 23665,
   22381, 19835, 18866, 20963, 23463, 25098, 25420, 21066, 16699, 13109,
@@ -682,7 +663,7 @@ const int16_t wave4[257] = {
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
 
-const int16_t wave5[257] = {
+FLASHMEM const int16_t wave5[257] = {
   128,  2377,  3553,  8132, 15859, 19741, 20740, 15842, 12140,
   16301, 22333, 22691, 20192, 16127, 15526, 20096, 24376, 26298, 27277,
   25342, 25325, 25308, 25244, 27658, 29967, 31296, 29699, 28555, 27136,
@@ -713,7 +694,7 @@ const int16_t wave5[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0007.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave6[257] = {
+FLASHMEM const int16_t wave6[257] = {
   169,  5290,  9724, 12433, 15117, 18280, 20033, 19633, 18540,
   18581, 19590, 20781, 21750, 22559, 23541, 24049, 23840, 24015, 25744,
   27533, 26780, 23289, 19035, 15521, 12142,  8922,  6047,  3440,  1283,
@@ -745,7 +726,7 @@ const int16_t wave6[257] = {
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
 
-const int16_t wave7[257] = {
+FLASHMEM const int16_t wave7[257] = {
   1801,  3031,  5679, 12616, 25233, 31808, 30641, 28498, 19182,
   4200, -3642, -3964, -3344, -2906, -2795,  4641,  9877,  9534, 11026,
   9893,  2650, -8757, -15832, -22454, -20833, -10463,  3792, 14262, 15231,
@@ -776,7 +757,7 @@ const int16_t wave7[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0010.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave8[257] = {
+FLASHMEM const int16_t wave8[257] = {
   3871,  8138, 19821, 28200, 24492, 20720, 25141, 23811, 15911,
   22681, 28682, 31466, 30366, 26945, 25461, 22263, 21563, 20415, 26082,
   25832, 24697, 23950, 23432, 21751, 19121, 20470, 18489, 15731, 12715,
@@ -807,7 +788,7 @@ const int16_t wave8[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0011.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave9[257] = {
+FLASHMEM const int16_t wave9[257] = {
   540,  2899,  5337,  7286, 10521, 13929, 19931, 20458, 22014,
   20037, 18214, 16562, 16576, 19172, 18798, 19624, 14394, 11691,  9057,
   6593,  4825,  1785,  2585,  2910,  3603,  2007,  1060,  -322, -1786,
@@ -838,7 +819,7 @@ const int16_t wave9[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0012.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave10[257] = {
+FLASHMEM const int16_t wave10[257] = {
   297,  2138,  4111,  5786,  8508,  9769, 10738, 11486, 13648,
   16190, 17237, 18531, 18682, 19207, 19072, 19259, 19464, 20110, 20304,
   20294, 20312, 19750, 19479, 19509, 19422, 19287, 18855, 19136, 18840,
@@ -869,7 +850,7 @@ const int16_t wave10[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0013.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave11[257] = {
+FLASHMEM const int16_t wave11[257] = {
   -807,  3424,  1861,  1240,  3748,  2482,  4618,  5156,  8283,
   7758, 10477, 11601, 11948, 11309, 11597, 16779,  9610, 15440, 16394,
   15751, 20521, 19929, 20780, 26606, 24592, 20787, 27492, 28304, 29551,
@@ -900,7 +881,7 @@ const int16_t wave11[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0014.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave12[257] = {
+FLASHMEM const int16_t wave12[257] = {
   6537, 17836, 16747, 21117, 24555, 23900, 25073, 32095, 24756,
   24488, 23599, 14632, 19773, 15751, 14521, 14954,  7941,  9485,  8144,
   10021, 10856, 12990, 18096, 18896, 23759, 26127, 22765, 19870, 12652,
@@ -932,7 +913,7 @@ const int16_t wave12[257] = {
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
 
-const int16_t wave13[257] = {
+FLASHMEM const int16_t wave13[257] = {
   1680,  7319,  5738,  8421,  9828, 10958,  9943, 10133, 10276,
   11207,  6282,  4523,  9057, 15428, 22081, 20268, 21903, 27996, 26477,
   26178, 23831, 22275, 20522, 18450, 15339, 14820, 13916,  5607,   593,
@@ -963,7 +944,7 @@ const int16_t wave13[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0017.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave14[257] = {
+FLASHMEM const int16_t wave14[257] = {
   256, 11049, 10400, 10005, 15514, 18317, 16244, 20465, 22342,
   18563, 20476, 24157, 21885, 19501, 19567, 16811, 13667, 13040, 11325,
   12292,  9640, 10433, 18797, 18240, 17050, 17033, 18760, 13318, 15378,
@@ -994,7 +975,7 @@ const int16_t wave14[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0018.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave15[257] = {
+FLASHMEM const int16_t wave15[257] = {
   320,  5008, 12331, 20030, 26507, 31108, 32743, 30354, 24745,
   17829, 11087,  5695,  2928,  3171,  5540,  9159, 13146, 16097, 16893,
   15532, 12154,  6953,  1203, -3396, -6136, -6896, -5338, -1791,  2350,
@@ -1025,7 +1006,7 @@ const int16_t wave15[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0019.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave16[257] = {
+FLASHMEM const int16_t wave16[257] = {
   809,  7568, 14976, 16020, 13739, 15449, 16432, 11179,  4663,
   4746,  7759,  9750, 16754, 23069, 21322, 19561, 20031, 18933, 17846,
   16649, 17355, 20004, 19510, 20775, 26871, 27078, 20128, 20373, 29170,
@@ -1056,7 +1037,7 @@ const int16_t wave16[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0020.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave17[257] = {
+FLASHMEM const int16_t wave17[257] = {
   639,  3101,  4052,  3954,  4426,  5570,  6864,  7856,  8763,
   9688,  9734,  8945,  8848,  9128,  7932,  6913,  7678,  8118,  8101,
   9302, 10248, 10751, 12666, 14437, 14501, 14576, 15351, 15815, 15869,
@@ -1085,7 +1066,7 @@ const int16_t wave17[257] = {
   -4624, -3520, -1734, -1155,    62,   749,  -203,   639
 };
 
-const int16_t wave18[257] = {
+FLASHMEM const int16_t wave18[257] = {
   536,  4340,  3365,  3758,  5031,  3737,  4445,  8192,  8645,
   9332, 15209, 17657, 14145, 11367,  8307,  5910,  8308, 11216, 12339,
   14575, 16321, 14561, 10846,  8254,  6301,  4435,  7094, 14050, 17192,
@@ -1116,7 +1097,7 @@ const int16_t wave18[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0033.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave19[257] = {
+FLASHMEM const int16_t wave19[257] = {
   1638,  7266,  4824,  3620,   871,  8673,  8407,  4038,  6767,
   9581,  7692, 10328,  7007,  8334, 12699,  6570,  5330,  8335, 16739,
   13048,  7352,  9103,  9716,  9246,  7067,  5060,  1394, -1503,  1670,
@@ -1147,7 +1128,7 @@ const int16_t wave19[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0034.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave20[257] = {
+FLASHMEM const int16_t wave20[257] = {
   -184,  4412, 13728, 28718, 30822, 26122, 20805,  9272,  3623,
   7856, -1041,  1693,  4128, -7354, -7010, -3144,   876,  6233,  1658,
   -750,   636, -2240,  1334,  -242, -10012, -13095, -17472, -26058, -16565,
@@ -1178,7 +1159,7 @@ const int16_t wave20[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0035.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave21[257] = {
+FLASHMEM const int16_t wave21[257] = {
   -678,  3356,  6607,  9446, 13836, 19962, 25825, 30765, 29996,
   28160, 18662, 11437,  4770, -2376, -8926, -16135, -21826, -26526, -25733,
   -20912, -10389, -5050,  1123,  7890, 13016, 18036, 20626, 21591, 19357,
@@ -1209,7 +1190,7 @@ const int16_t wave21[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0036.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave22[257] = {
+FLASHMEM const int16_t wave22[257] = {
   337,  3172,  6440,  9811, 13306, 16842, 20328, 23595, 26553,
   29047, 30972, 32211, 32740, 32616, 31938, 30811, 29289, 27462, 25368,
   23093, 20745, 18347, 15871, 13347, 10713,  7961,  5102,  2089, -1018,
@@ -1240,7 +1221,7 @@ const int16_t wave22[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0037.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave23[257] = {
+FLASHMEM const int16_t wave23[257] = {
   1418, 16043, 30467, 30006,  5078, -14991, -13699, -9809, -5266,
   -3335, -1900, -1688, -1291, -1362, -1194, -1249, -1159, -1170, -1130,
   -1101, -1095, -1039, -1058,  -983, -1020,  -936,  -979,  -891,  -936,
@@ -1271,7 +1252,7 @@ const int16_t wave23[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0038.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave24[257] = {
+FLASHMEM const int16_t wave24[257] = {
   723,  -866, -1820,  2445,  4986,  5937,  5509,  6008,  6921,
   6115,  6137,  8411,  8201,  9543,  9903, 10833, 11506, 10995, 12237,
   12214, 13661, 14271, 13624, 13451, 16046, 17200, 15795, 17222, 16769,
@@ -1302,7 +1283,7 @@ const int16_t wave24[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0039.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave25[257] = {
+FLASHMEM const int16_t wave25[257] = {
   4158,  8211,  7972,  8007, 13177, 11077,  6608, 15684, 14902,
   22650, 23774, 24096, 29921, 26121, 28825, 29610, 29239, 30804, 30050,
   30542, 30196, 30418, 30282, 30316, 30385, 29816, 30014, 30370, 30259,
@@ -1333,7 +1314,7 @@ const int16_t wave25[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0040.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave26[257] = {
+FLASHMEM const int16_t wave26[257] = {
   1169, 13248, 13186,  6751,  4173,  3045, 11633, 11523,  5189,
   9737, 28008, 27858, 10835, 12467, 14434, -4732, -6998, -15179, -18855,
   -13396, -23895, -23580, -21726, -21947, -24092, -20670, -15600, -12617, -6760,
@@ -1364,7 +1345,7 @@ const int16_t wave26[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0041.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave27[257] = {
+FLASHMEM const int16_t wave27[257] = {
   171,  4345,  7689,  9368, 14848, 18021, 17340, 16771, 17933,
   19099, 17959, 15381, 13302, 11271,  9630, 10136,  9285,  9966,  9560,
   7012,  5269,  4534,  5750,  5190,  1105, -1681, -3816, -4951, -7057,
@@ -1395,7 +1376,7 @@ const int16_t wave27[257] = {
 // Converted by AKWF2Teensy from AKWF_snippet_0042.wav.
 // AKWF2Teensy - Beerware by Datanoise.net.
 // Length: 257
-const int16_t wave28[257] = {
+FLASHMEM const int16_t wave28[257] = {
   970,  2501,  2461,  6917,  8932,  9275, 12288, 16360, 18982,
   21680, 21749, 20932, 20437, 20480, 21518, 23420, 23671, 22276, 21234,
   19671, 14843, 10264,  7912,  5369,  -452, -6808, -7478, -4515,   545,

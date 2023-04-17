@@ -48,6 +48,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
         env1on = true;
         voiceOn[0] = true;
         break;
+
       case 2:
         voices[1].note = note;
         note2freq = note;
@@ -57,6 +58,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
         env2on = true;
         voiceOn[1] = true;
         break;
+
       case 3:
         voices[2].note = note;
         note3freq = note;
@@ -66,6 +68,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
         env3on = true;
         voiceOn[2] = true;
         break;
+
       case 4:
         voices[3].note = note;
         note4freq = note;
@@ -75,6 +78,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
         env4on = true;
         voiceOn[3] = true;
         break;
+
       case 5:
         voices[4].note = note;
         note5freq = note;
@@ -84,6 +88,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
         env5on = true;
         voiceOn[4] = true;
         break;
+
       case 6:
         voices[5].note = note;
         note6freq = note;
@@ -105,6 +110,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
     lfoAenv1.noteOn();
     env1on = true;
     voiceOn[0] = true;
+
     voices[1].note = note;
     note2freq = note;
     env2.noteOn();
@@ -112,35 +118,9 @@ void myNoteOn(byte channel, byte note, byte velocity) {
     lfoAenv2.noteOn();
     env2on = true;
     voiceOn[1] = true;
-    voices[2].note = note;
-    note3freq = note;
-    env3.noteOn();
-    filterEnv3.noteOn();
-    lfoAenv3.noteOn();
-    env3on = true;
-    voiceOn[2] = true;
-    voices[3].note = note;
-    note4freq = note;
-    env4.noteOn();
-    filterEnv4.noteOn();
-    lfoAenv4.noteOn();
-    env4on = true;
-    voiceOn[3] = true;
-    voices[4].note = note;
-    note5freq = note;
-    env5.noteOn();
-    filterEnv5.noteOn();
-    lfoAenv5.noteOn();
-    env5on = true;
-    voiceOn[4] = true;
-    voices[5].note = note;
-    note6freq = note;
-    env6.noteOn();
-    filterEnv6.noteOn();
-    lfoAenv6.noteOn();
-    env6on = true;
-    voiceOn[5] = true;
+ 
   }
+  
   if (digitalRead(MONO_POLY1) == 0 && digitalRead(MONO_POLY2) == 1) {
     voices[0].note = note;
     note1freq = note;
@@ -164,6 +144,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         voices[0].note = -1;
         voiceOn[0] = false;
         break;
+
       case 2:
         env2.noteOff();
         filterEnv2.noteOff();
@@ -172,6 +153,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         voices[1].note = -1;
         voiceOn[1] = false;
         break;
+
       case 3:
         env3.noteOff();
         filterEnv3.noteOff();
@@ -180,6 +162,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         voices[2].note = -1;
         voiceOn[2] = false;
         break;
+
       case 4:
         env4.noteOff();
         filterEnv4.noteOff();
@@ -188,6 +171,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         voices[3].note = -1;
         voiceOn[3] = false;
         break;
+
       case 5:
         env5.noteOff();
         filterEnv5.noteOff();
@@ -196,6 +180,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
         voices[4].note = -1;
         voiceOn[4] = false;
         break;
+
       case 6:
         env6.noteOff();
         filterEnv6.noteOff();
@@ -222,33 +207,6 @@ void myNoteOff(byte channel, byte note, byte velocity) {
     voices[1].note = -1;
     voiceOn[1] = false;
 
-    env3.noteOff();
-    filterEnv3.noteOff();
-    lfoAenv3.noteOff();
-    env3on = false;
-    voices[2].note = -1;
-    voiceOn[2] = false;
-
-    env4.noteOff();
-    filterEnv4.noteOff();
-    lfoAenv4.noteOff();
-    env4on = false;
-    voices[3].note = -1;
-    voiceOn[3] = false;
-
-    env5.noteOff();
-    filterEnv5.noteOff();
-    lfoAenv5.noteOff();
-    env5on = false;
-    voices[4].note = -1;
-    voiceOn[4] = false;
-
-    env6.noteOff();
-    filterEnv6.noteOff();
-    lfoAenv6.noteOff();
-    env6on = false;
-    voices[5].note = -1;
-    voiceOn[5] = false;
   }
 
   if (digitalRead(MONO_POLY1) == 0 && digitalRead(MONO_POLY2) == 1) {
