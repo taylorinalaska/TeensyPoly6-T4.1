@@ -4,7 +4,7 @@ This is a polyphonic synth forked from albnys/TeensyPoly6
 
 I have tidied up the files so it now compiles properly
 
-The analogue interface now uses 6 MUX chips to read the pots and switches so there is no need to connect top the top or underneath of the Teensy 3.5 for the extra analogue inputs required. It runs smoother now as well.
+The analogue interface now uses 6 MUX chips to read the pots and switches so there is no need to connect top the top or underneath of the Teensy 3.6 for the extra analogue inputs required. It runs smoother now as well.
 
 The schematics are a mess so I will redo them too.
 
