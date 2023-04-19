@@ -26,7 +26,7 @@ const char CHARACTERS[TOTALCHARS] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'
 int charIndex = 0;
 char currentCharacter = 0;
 String renamedPatch = "";
-
+int SavePatchnumber = 0;
 struct PatchNoAndName
 {
   int patchNo;
@@ -35,7 +35,7 @@ struct PatchNoAndName
 
 CircularBuffer<PatchNoAndName, PATCHES_LIMIT> patches;
 
-FLASHMEM size_t readField(File *file, char *str, size_t size, const char *delim)
+size_t readField(File *file, char *str, size_t size, const char *delim)
 {
   char ch;
   size_t n = 0;
@@ -56,7 +56,7 @@ FLASHMEM size_t readField(File *file, char *str, size_t size, const char *delim)
   return n;
 }
 
-FLASHMEM void recallPatchData(File patchFile, String data[])
+void recallPatchData(File patchFile, String data[])
 {
   //Read patch data from file and set current patch parameters
   size_t n;     // Length of returned field with delimiter.
@@ -87,11 +87,11 @@ FLASHMEM void recallPatchData(File patchFile, String data[])
   }
 }
 
-FLASHMEM int compare(const void *a, const void *b) {
+int compare(const void *a, const void *b) {
   return ((PatchNoAndName*)a)->patchNo - ((PatchNoAndName*)b)->patchNo;
 }
 
-FLASHMEM void sortPatches()
+void sortPatches()
 {
   int arraySize = patches.size();
   //Sort patches buffer to be consecutive ascending patchNo order
@@ -110,7 +110,7 @@ FLASHMEM void sortPatches()
   }
 }
 
-FLASHMEM void loadPatches()
+void loadPatches()
 {
   File file = SD.open("/");
   patches.clear();
@@ -137,11 +137,8 @@ FLASHMEM void loadPatches()
   sortPatches();
 }
 
-FLASHMEM void savePatch(const char *patchNo, String patchData)
+void savePatch(const char *patchNo, String patchData)
 {
-  // Serial.print("savePatch Patch No:");
-  //  Serial.println(patchNo);
-  //Overwrite existing patch by deleting
   if (SD.exists(patchNo))
   {
     SD.remove(patchNo);
@@ -149,9 +146,6 @@ FLASHMEM void savePatch(const char *patchNo, String patchData)
   File patchFile = SD.open(patchNo, FILE_WRITE);
   if (patchFile)
   {
-    //    Serial.print("Writing Patch No:");
-    //    Serial.println(patchNo);
-    //Serial.println(patchData);
     patchFile.println(patchData);
     patchFile.close();
   }
@@ -162,7 +156,7 @@ FLASHMEM void savePatch(const char *patchNo, String patchData)
   }
 }
 
-FLASHMEM void savePatch(const char *patchNo, String patchData[])
+void savePatch(const char *patchNo, String patchData[])
 {
   String dataString = patchData[0];
   for (int i = 1; i < NO_OF_PARAMS; i++)
@@ -172,12 +166,12 @@ FLASHMEM void savePatch(const char *patchNo, String patchData[])
   savePatch(patchNo, dataString);
 }
 
-FLASHMEM void deletePatch(const char *patchNo)
+void deletePatch(const char *patchNo)
 {
   if (SD.exists(patchNo)) SD.remove(patchNo);
 }
 
-FLASHMEM void renumberPatchesOnSD() {
+void renumberPatchesOnSD() {
   for (int i = 0; i < patches.size(); i++)
   {
     String data[NO_OF_PARAMS]; //Array of data read in
@@ -191,14 +185,13 @@ FLASHMEM void renumberPatchesOnSD() {
   deletePatch(String(patches.size() + 1).c_str()); //Delete final patch which is duplicate of penultimate patch
 }
 
-FLASHMEM void setPatchesOrdering(int no) {
+void setPatchesOrdering(int no) {
   if (patches.size() < 2)return;
   while (patches.first().patchNo != no) {
     patches.push(patches.shift());
   }
 }
 
-FLASHMEM void resetPatchesOrdering() {
+void resetPatchesOrdering() {
   setPatchesOrdering(1);
 }
-

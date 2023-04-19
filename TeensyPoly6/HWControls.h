@@ -1,0 +1,154 @@
+// This optional setting causes Encoder to use more optimized code,
+// It must be defined before Encoder.h is included.
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#include <Encoder.h>
+#include <Bounce.h>
+#include "TButton.h"
+#include <ADC.h>
+#include <ADC_util.h>
+
+ADC *adc = new ADC();
+
+//Teensy 3.6 - Mux Pins
+
+#define MUX1 28
+#define MUX2 29
+#define MUX3 30
+
+//Teensy 3.6 Pins
+
+#define DEBOUNCE 30
+#define RECALL_SW 24
+#define SAVE_SW 7
+#define SETTINGS_SW 8
+#define BACK_SW 6
+
+#define ENCODER_PINA 4
+#define ENCODER_PINB 5
+
+
+#define DEBOUNCE 30
+
+// LEDs
+
+#define MUXCHANNELS 8
+#define QUANTISE_FACTOR 7
+
+static byte muxInput = 0;
+
+static int mux1ValuesPrev[MUXCHANNELS] = {};
+static int mux2ValuesPrev[MUXCHANNELS] = {};
+static int mux3ValuesPrev[MUXCHANNELS] = {};
+static int mux4ValuesPrev[MUXCHANNELS] = {};
+static int mux5ValuesPrev[MUXCHANNELS] = {};
+static int mux6ValuesPrev[MUXCHANNELS] = {};
+
+static int mux1Read = 0;
+static int mux2Read = 0;
+static int mux3Read = 0;
+static int mux4Read = 0;
+static int mux5Read = 0;
+static int mux6Read = 0;
+
+
+static long encPrevious = 0;
+
+float mux0;
+float mux1;
+float mux2;
+float mux3;
+float oldmux3;
+float mux4;
+float mux5;
+float mux6;
+float mux7;
+float mux8;
+float mux9;
+float mux10;
+float mux11;
+float mux12;
+float mux13;
+float mux14;
+float mux15;
+float mux16;
+float mux17;
+float mux18;
+float mux19;
+float mux20;
+float mux21;
+float mux22;
+int mux23;
+float mux24;
+float mux25;
+float mux26;
+float mux27;
+float mux28;
+float mux29;
+float mux30;
+int FILTER_MODE;
+int MONO_POLY_1;
+int MONO_POLY_2;
+int A_SHAPE_1;
+int A_SHAPE_2;
+int B_SHAPE_1;
+int B_SHAPE_2;
+int MAIN_OCT_1;
+int MAIN_OCT_2;
+int B_OCTAVE_1;
+int B_OCTAVE_2;
+int C_OCTAVE_1;
+int C_OCTAVE_2;
+int LFOA_DEST_1;
+int LFOA_DEST_2;
+int LFOA_SHAPE_1;
+int LFOA_SHAPE_2;
+
+
+//These are pushbuttons and require debouncing
+
+Bounce recallButton = Bounce(RECALL_SW, DEBOUNCE); //On encoder
+boolean recall = true; //Hack for recall button
+Bounce saveButton = Bounce(SAVE_SW, DEBOUNCE);
+boolean del = true; //Hack for save button
+TButton settingsButton{SETTINGS_SW, LOW, HOLD_DURATION, DEBOUNCE, CLICK_DURATION};
+Bounce backButton = Bounce(BACK_SW, DEBOUNCE);
+boolean panic = true; //Hack for back button
+Encoder encoder(ENCODER_PINB, ENCODER_PINA);//This often needs the pins swapping depending on the encoder
+
+void setupHardware()
+{
+  adc->adc0->setAveraging(16);                                          // set number of averages 0, 4, 8, 16 or 32.
+  adc->adc0->setResolution(10);                                         // set bits of resolution  8, 10, 12 or 16 bits.
+  adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_LOW_SPEED);  // change the conversion speed
+  adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_SPEED);           // change the sampling speed
+
+  //MUXs on ADC1
+  adc->adc1->setAveraging(16);                                          // set number of averages 0, 4, 8, 16 or 32.
+  adc->adc1->setResolution(10);                                         // set bits of resolution  8, 10, 12 or 16 bits.
+  adc->adc1->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_LOW_SPEED);  // change the conversion speed
+  adc->adc1->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_SPEED);           // change the sampling speed
+
+  analogWriteResolution(10);
+  analogReadResolution(10);
+
+
+  //Mux address pins
+
+  pinMode(MUX1, OUTPUT);
+  pinMode(MUX2, OUTPUT);
+  pinMode(MUX3, OUTPUT);
+
+
+  digitalWrite(MUX1, LOW);
+  digitalWrite(MUX2, LOW);
+  digitalWrite(MUX3, LOW);
+
+  analogReadResolution(10);
+
+  //Switches
+  pinMode(RECALL_SW, INPUT_PULLUP); //On encoder
+  pinMode(SAVE_SW, INPUT_PULLUP);
+  pinMode(SETTINGS_SW, INPUT_PULLUP);
+  pinMode(BACK_SW, INPUT_PULLUP);
+
+}

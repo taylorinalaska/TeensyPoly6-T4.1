@@ -1,34 +1,35 @@
 /*
-  poly6 programmer- Firmware Rev 1.2
+  Poly 6 virtual Synth and editor
 
   Includes code by:
     Dave Benn - Handling MUXs, a few other bits and original inspiration  https://www.notesandvolts.com/2019/01/teensy-synth-part-10-hardware.html
 
   Arduino IDE
   Tools Settings:
-  Board: "Teensy3.5"
-  USB Type: "Serial + MIDI + Audio"
-  CPU Speed: "180"
+  Board: "Teensy3.6"
+  USB Type: "Serial + MIDI"
+  CPU Speed: "192" OVERCLOCK
   Optimize: "Fastest"
 
   Additional libraries:
     Agileware CircularBuffer available in Arduino libraries manager
     Replacement files are in the Modified Libraries folder and need to be placed in the teensy Audio folder.
 */
+
 #include <Audio.h>
-#include <SD.h>
 #include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
 #include <SerialFlash.h>
 #include <MIDI.h>
-
-#include "a_globals.h"
-#include "Hardware.h"
-#include "f_mux.h"
-#include "g_params.h"
+#include "MidiCC.h"
+#include "Constants.h"
+#include "Parameters.h"
 #include "PatchMgr.h"
+#include "HWControls.h"
 #include "EepromMgr.h"
-#include "Settings.h"
-#include "i_noteOn.h"
+
+
 
 #define PARAMETER 0      //The main page for displaying the current patch and control (parameter) changes
 #define RECALL 1         //Patches list
@@ -47,34 +48,42 @@ unsigned int state = PARAMETER;
 
 boolean cardStatus = false;
 
+//MIDI 5 Pin DIN
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+unsigned long buttonDebounce = 0;
 
+#include "Settings.h"
+//#include "SettingsService.h"
+
+int patchNo = 1;               //Current patch no
+int voiceToReturn = -1;        //Initialise
+long earliestTime = millis();  //For voice allocation - initialise to now
+
+struct VoiceAndNote {
+  int note;
+  int velocity;
+  long timeOn;
+};
+
+struct VoiceAndNote voices[NO_OF_VOICES] = {
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 },
+  { -1, -1, 0 }
+};
+
+boolean voiceOn[NO_OF_VOICES] = { false, false, false, false, false, false };
+int prevNote = 0;  //Initialised to middle value
+bool notes[88] = { 0 }, initial_loop = 1;
+int8_t noteOrder[80] = { 0 }, orderIndx = { 0 };
 
 void setup() {
   AudioMemory(470);
   SPI.begin();
   setupDisplay();
-
-
-  //Read MIDI Channel from EEPROM
-  midiChannel = getMIDIChannel();
-  Serial.println("MIDI Ch:" + String(midiChannel) + " (0 is Omni On)");
-
-  //Midi setup
-  // usbMIDI.begin();
-  // usbMIDI.setHandleNoteOn(myNoteOn);
-  // usbMIDI.setHandleNoteOff(myNoteOff);
-  // usbMIDI.setHandlePitchChange(myPitchBend);
-  // usbMIDI.setHandleProgramChange(myProgramChange);
-
-  MIDI.setHandleNoteOn(myNoteOn);
-  MIDI.setHandleNoteOff(myNoteOff);
-  MIDI.setHandlePitchBend(myPitchBend);
-  MIDI.setHandleProgramChange(myProgramChange);
-  MIDI.setHandleControlChange(myControlChange);
-  MIDI.setHandleAfterTouchChannel(myAfterTouch);
-  MIDI.begin(midiChannel);
-
+  setUpSettings();
   setupHardware();
 
   cardStatus = SD.begin(BUILTIN_SDCARD);
@@ -93,11 +102,32 @@ void setup() {
     showPatchPage("No SD", "conn'd / usable");
   }
 
-  //Read Encoder Direction from EEPROM
+
+  //USB Client MIDI#
+  usbMIDI.begin();
+  usbMIDI.setHandleNoteOn(myNoteOn);
+  usbMIDI.setHandleNoteOff(myNoteOff);
+  usbMIDI.setHandlePitchChange(myPitchBend);
+  usbMIDI.setHandleControlChange(myControlChange);
+  usbMIDI.setHandleProgramChange(myProgramChange);
+  usbMIDI.setHandleAfterTouchChannel(myAfterTouch);
+  Serial.println("USB Client MIDI Listening");
+
+  //MIDI 5 Pin DIN
+  MIDI.begin();
+  MIDI.setHandleNoteOn(myNoteOn);
+  MIDI.setHandleNoteOff(myNoteOff);
+  MIDI.setHandlePitchBend(myPitchBend);
+  MIDI.setHandleControlChange(myControlChange);
+  MIDI.setHandleProgramChange(myProgramChange);
+  MIDI.setHandleAfterTouchChannel(myAfterTouch);
+  MIDI.turnThruOn(midi::Thru::Mode::Off);
+  Serial.println("MIDI In DIN Listening");
+
   encCW = getEncoderDir();
-  recallPatch(patchNo);  //Load first patch
-  //reinitialiseToPanel();
-  updateScreen();
+  midiChannel = getMIDIChannel();
+  modWheelDepth = getModWheelDepth();
+  pitchBendRange = getPitchBendRange();
 
   //vco setup
   vcoA1.begin(vcoVol, 150, WAVEFORM_SAWTOOTH);
@@ -234,35 +264,528 @@ void setup() {
   patchCord29.disconnect();  //filter
   patchCord40.disconnect();  //filter
   patchCord45.disconnect();  //filter
+
+  recallPatch(patchNo);  //Load first patch
+  updateScreen();
 }
 
-void myPitchBend(byte channel, int pitch) {
-  newpitchbend = (pitch + 8192) / 16;
+int getVoiceNo(int note) {
+  voiceToReturn = -1;       //Initialise to 'null'
+  earliestTime = millis();  //Initialise to now
+  if (note == -1) {
+    //NoteOn() - Get the oldest free voice (recent voices may be still on release stage)
+    for (int i = 0; i < NO_OF_VOICES; i++) {
+      if (voices[i].note == -1) {
+        if (voices[i].timeOn < earliestTime) {
+          earliestTime = voices[i].timeOn;
+          voiceToReturn = i;
+        }
+      }
+    }
+    if (voiceToReturn == -1) {
+      //No free voices, need to steal oldest sounding voice
+      earliestTime = millis();  //Reinitialise
+      for (int i = 0; i < NO_OF_VOICES; i++) {
+        if (voices[i].timeOn < earliestTime) {
+          earliestTime = voices[i].timeOn;
+          voiceToReturn = i;
+        }
+      }
+    }
+    return voiceToReturn + 1;
+  } else {
+    //NoteOff() - Get voice number from note
+    for (int i = 0; i < NO_OF_VOICES; i++) {
+      if (voices[i].note == note) {
+        return i + 1;
+      }
+    }
+  }
+  //Shouldn't get here, return voice 1
+  return 1;
 }
 
-void myControlChange(byte channel, byte control, int value) {
+void myNoteOn(byte channel, byte note, byte velocity) {
+
+  if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {  //POLYPHONIC mode
+    if (note < 0 || note > 127) return;
+    switch (getVoiceNo(-1)) {
+      case 1:
+        voices[0].note = note;
+        note1freq = note;
+        env1.noteOn();
+        filterEnv1.noteOn();
+        lfoAenv1.noteOn();
+        env1on = true;
+        voiceOn[0] = true;
+        break;
+
+      case 2:
+        voices[1].note = note;
+        note2freq = note;
+        env2.noteOn();
+        filterEnv2.noteOn();
+        lfoAenv2.noteOn();
+        env2on = true;
+        voiceOn[1] = true;
+        break;
+
+      case 3:
+        voices[2].note = note;
+        note3freq = note;
+        env3.noteOn();
+        filterEnv3.noteOn();
+        lfoAenv3.noteOn();
+        env3on = true;
+        voiceOn[2] = true;
+        break;
+
+      case 4:
+        voices[3].note = note;
+        note4freq = note;
+        env4.noteOn();
+        filterEnv4.noteOn();
+        lfoAenv4.noteOn();
+        env4on = true;
+        voiceOn[3] = true;
+        break;
+
+      case 5:
+        voices[4].note = note;
+        note5freq = note;
+        env5.noteOn();
+        filterEnv5.noteOn();
+        lfoAenv5.noteOn();
+        env5on = true;
+        voiceOn[4] = true;
+        break;
+
+      case 6:
+        voices[5].note = note;
+        note6freq = note;
+        env6.noteOn();
+        filterEnv6.noteOn();
+        lfoAenv6.noteOn();
+        env6on = true;
+        voiceOn[5] = true;
+        break;
+    }
+  }
+
+  if (MONO_POLY_1 > 511 && MONO_POLY_2 < 511) {  //UNISON mode
+    if (note < 0 || note > 127) return;
+    voices[0].note = note;
+    note1freq = note;
+    env1.noteOn();
+    filterEnv1.noteOn();
+    lfoAenv1.noteOn();
+    env1on = true;
+    voiceOn[0] = true;
+
+    voices[1].note = note;
+    note2freq = note;
+    env2.noteOn();
+    filterEnv2.noteOn();
+    lfoAenv2.noteOn();
+    env2on = true;
+    voiceOn[1] = true;
+  }
+
+  if (MONO_POLY_1 < 511 && MONO_POLY_2 > 511) {
+    voices[0].note = note;
+    note1freq = note;
+    env1.noteOn();
+    filterEnv1.noteOn();
+    lfoAenv1.noteOn();
+    env1on = true;
+    voiceOn[0] = true;
+  }
+}
+
+void myNoteOff(byte channel, byte note, byte velocity) {
+
+  if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {  //POLYPHONIC mode
+    switch (getVoiceNo(note)) {
+      case 1:
+        env1.noteOff();
+        filterEnv1.noteOff();
+        lfoAenv1.noteOff();
+        env1on = false;
+        voices[0].note = -1;
+        voiceOn[0] = false;
+        break;
+
+      case 2:
+        env2.noteOff();
+        filterEnv2.noteOff();
+        lfoAenv2.noteOff();
+        env2on = false;
+        voices[1].note = -1;
+        voiceOn[1] = false;
+        break;
+
+      case 3:
+        env3.noteOff();
+        filterEnv3.noteOff();
+        lfoAenv3.noteOff();
+        env3on = false;
+        voices[2].note = -1;
+        voiceOn[2] = false;
+        break;
+
+      case 4:
+        env4.noteOff();
+        filterEnv4.noteOff();
+        lfoAenv4.noteOff();
+        env4on = false;
+        voices[3].note = -1;
+        voiceOn[3] = false;
+        break;
+
+      case 5:
+        env5.noteOff();
+        filterEnv5.noteOff();
+        lfoAenv5.noteOff();
+        env5on = false;
+        voices[4].note = -1;
+        voiceOn[4] = false;
+        break;
+
+      case 6:
+        env6.noteOff();
+        filterEnv6.noteOff();
+        lfoAenv6.noteOff();
+        env6on = false;
+        voices[5].note = -1;
+        voiceOn[5] = false;
+        break;
+    }
+  }
+
+  if (MONO_POLY_1 > 511 && MONO_POLY_2 < 511) {  //UNISON
+    env1.noteOff();
+    filterEnv1.noteOff();
+    lfoAenv1.noteOff();
+    env1on = false;
+    voices[0].note = -1;
+    voiceOn[0] = false;
+
+    env2.noteOff();
+    filterEnv2.noteOff();
+    lfoAenv2.noteOff();
+    env2on = false;
+    voices[1].note = -1;
+    voiceOn[1] = false;
+  }
+
+  if (MONO_POLY_1 < 511 && MONO_POLY_2 > 511) {
+    env1.noteOff();
+    filterEnv1.noteOff();
+    lfoAenv1.noteOff();
+    env1on = false;
+    voices[0].note = -1;
+    voiceOn[0] = false;
+  }
+}
+
+void allNotesOff() {
+}
+
+FLASHMEM void updateVolume() {
+  mainVol = (float)mux23 / 1024;
+}
+
+//main octave
+FLASHMEM void updateMainOctave() {
+  if (MAIN_OCT_1 > 511) {
+    octave = 0.5;
+  } else if (MAIN_OCT_1 < 511 && MAIN_OCT_2 < 511) {
+    octave = 1;
+  } else if (MAIN_OCT_2 > 511) {
+    octave = 2;
+  }
+}
+
+///////////////  OCTAVES OCTAVES /////////////////////////////////////////////////////////////7////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//octave vco B
+FLASHMEM void updateOctaveB() {
+  if (B_OCTAVE_1 > 511) {
+    octaveB = 0.5;
+  } else if (B_OCTAVE_1 < 511 && B_OCTAVE_2 < 511) {
+    octaveB = 1;
+  } else if (B_OCTAVE_2 > 511) {
+    octaveB = 2;
+  }
+}
+
+
+
+FLASHMEM void updateOctaveC() {
+  if (C_OCTAVE_1 > 511) {
+    octaveC = 0.5;
+  } else if (C_OCTAVE_1 < 511 && C_OCTAVE_2 < 511) {
+    octaveC = 1;
+  } else if (C_OCTAVE_2 > 511) {
+    octaveC = 2;
+  }
+}
+
+//Shape A
+FLASHMEM void updateShapeA() {
+  if (A_SHAPE_1 > 511) {
+    shapeA = 0;
+  } else if (A_SHAPE_1 < 511 && A_SHAPE_2 < 511) {
+    shapeA = 1;
+  } else if (A_SHAPE_2 > 511) {
+    shapeA = 2;
+  }
+}
+
+//Shape B
+FLASHMEM void updateShapeB() {
+  if (B_SHAPE_1 > 511) {
+    shapeB = 0;
+  } else if (B_SHAPE_1 < 511 && B_SHAPE_2 < 511) {
+    shapeB = 1;
+  } else if (B_SHAPE_2 > 511) {
+    shapeB = 2;
+  }
+}
+
+//Vco C shape
+FLASHMEM void updateShapeC() {
+  shapeC = mux11;
+  //Serial.println("Shape C ");
+}
+
+//tuneB
+FLASHMEM void updateTuneB() {
+  if (mux13 < 512) {
+    tuneB = ((float)mux13 / 1023) + 0.5;
+  } else {
+    tuneB = ((float)mux13 / 510);
+  }
+}
+
+//tuneC
+FLASHMEM void updateTuneC() {
+  if (mux12 < 512) {
+    tuneC = ((float)mux12 / 1023) + 0.5;
+  } else {
+    tuneC = ((float)mux12 / 510);
+  }
+}
+
+//Cross mod
+FLASHMEM void updateCrossMod() {
+  crossMod = (float)mux14 / 512;
+}
+
+
+FLASHMEM void updateVolA() {
+  vcoAvol = (float)mux10 / 1023;
+}
+
+FLASHMEM void updateVolB() {
+  vcoBvol = (float)mux9 / 1023;
+}
+
+FLASHMEM void updateVolC() {
+  vcoCvol = (float)mux8 / 1023;
+}
+
+FLASHMEM void updateSubVol() {
+  Subvol = (float)mux17 / 1023;
+}
+
+//Filter
+FLASHMEM void updateCutoff() {
+  cut = 15000 * (float)mux25 / 1023 + 15;  /////cut
+}
+
+FLASHMEM void updateRes() {
+  res = 4.5 * (float)mux24 / 1023 + 1.1;
+}
+
+//Filter Env
+
+FLASHMEM void updateFilterAttack() {
+  filtAtt = (3000 * (float)mux0 / 1023);
+}
+
+FLASHMEM void updateFilterDecay() {
+  filtDec = (3000 * (float)mux1 / 1023);
+}
+
+FLASHMEM void updateFilterAmount() {
+  filtAmt = (float)mux2 / 512 - 1;
+}
+
+FLASHMEM void updateFilterMode() {
+  if (FILTER_MODE > 511) {
+    filterMode = 1;
+  } else if (FILTER_MODE < 511) {
+    filterMode = 0;
+  }
+}
+
+FLASHMEM void updateAttack() {
+  envAtt = 3000 * (float)mux27 / 1023;
+}
+
+FLASHMEM void updateDecay() {
+  envDec = 5000 * (float)mux26 / 1023;
+  envRel = 5000 * (float)mux26 / 1023;
+}
+
+FLASHMEM void updateSustain() {
+  envSus = (float)mux22 / 100;
+}
+
+FLASHMEM void updateLFOAmount() {
+  if (lfoAdest == 0 && lfoAshape != 2) {
+    lfoAamp = ((float)mux3) / 1024 / 10;
+  } else {
+    lfoAamp = ((float)mux3) / 1024 / 3;
+  }
+}
+
+FLASHMEM void updateLFOFreq() {
+  lfoAfreq = 20 * (float)mux4 / 1024 + 0.1;
+}
+
+FLASHMEM void updateLFOAttack() {
+  lfoAdel = 2000 * (float)mux5 / 1024;
+  lfoAatt = 3000 * (float)mux5 / 1024;
+}
+
+FLASHMEM void updateLFODecay() {
+  lfoAdec = 4000 * (float)mux6 / 1024;
+  lfoArel = 4000 * (float)mux6 / 1024;
+}
+
+FLASHMEM void updateLFOSustain() {
+  lfoAsus = (float)mux7 / 1024;
+}
+
+
+FLASHMEM void updateLFODestination() {
+  if (LFOA_DEST_1 > 511) {  //lfo - pitch
+    lfoAdest = 0;
+  } else if (LFOA_DEST_1 < 511 && LFOA_DEST_2 < 511) {  //lfo - filter
+    lfoAdest = 1;
+  } else if (LFOA_DEST_2 > 511) {  //lfo - amp
+    lfoAdest = 2;
+  }
+}
+
+//lfoA shape
+FLASHMEM void updateLFOShape() {
+  if (LFOA_SHAPE_1 > 511) {
+    lfoAshape = 0;
+  } else if (LFOA_SHAPE_1 < 511 && LFOA_SHAPE_2 < 511) {
+    lfoAshape = 1;
+  } else if (LFOA_SHAPE_2 > 511) {
+    lfoAshape = 2;
+  }
+}
+
+FLASHMEM void updatePWAmount() {
+  lfoBamp = (float)mux15 / 1023;
+}
+
+FLASHMEM void updatePWFreq() {
+  lfoBfreq = 5 * (float)mux16 / 1023 + 0.1;
+}
+
+//Delay
+FLASHMEM void updateDelayMix() {
+  dlyAmt = (float)mux21 / 1100 - 0.1;
+  if (dlyAmt < 0) {
+    dlyAmt = 0;
+  }
+}
+
+FLASHMEM void updateDelayTime() {
+  dlyTimeL = mux20 / 2.5;
+  dlyTimeR = mux20 / 1.25;
+}
+
+//Reverb
+FLASHMEM void updateReverbMix() {
+  revMix = ((float)mux18 / 1024 / 1.2);
+}
+
+FLASHMEM void updateReverbSize() {
+  revSize = ((float)mux19 / 1024 - 0.01);
+}
+
+void updatePatchname() {
+  showPatchPage(String(patchNo), patchName);
+}
+
+
+void myControlChange(byte channel, byte control, byte value) {
   switch (control) {
 
     case CCmodwheel:
       midiMod = (value << 3);
-      //Serial.println(lfoAmppot);
+      oldmux3 = mux3;
+      mux3 = mux3 + midiMod;
+      if (mux3 > 1023) {
+        mux3 = 1023;
+      }
+      updateLFOAmount();
+      mux3 = oldmux3;
+      break;
+
+    case CCvolumeControl:
+      mux23 = (value << 3);
+      updateVolume();
+      break;
+
+    case CCvcf_frequency:
+      mux25 = (value << 3);
+      updateCutoff();
+      break;
+
+    case CCvcf_resonance:
+      mux24 = (value << 3);
+      updateRes();
       break;
   }
 }
 
 void myAfterTouch(byte channel, byte value) {
   midiMod = (value << 3);
+  oldmux3 = mux3;
+  mux3 = mux3 + midiMod;
+  if (mux3 > 1023) {
+    mux3 = 1023;
+  }
+  updateLFOAmount();
+  mux3 = oldmux3;
 }
 
-FLASHMEM void myProgramChange(byte channel, byte program) {
+void myPitchBend(byte channel, int pitch) {
+  newpitchbend = (pitch + 8192) / 16;
+  bend = 1 + (newpitchbend / 1023 / 4.3) - 0.12;
+}
+
+void myProgramChange(byte channel, byte program) {
   state = PATCH;
   patchNo = program + 1;
   recallPatch(patchNo);
+  Serial.print("MIDI Pgm Change:");
+  Serial.println(patchNo);
   state = PARAMETER;
 }
 
-FLASHMEM void recallPatch(int patchNo) {
-  //allNotesOff();
+void recallPatch(int patchNo) {
+  allNotesOff();
   File patchFile = SD.open(String(patchNo).c_str());
   if (!patchFile) {
     Serial.println("File not found");
@@ -272,23 +795,6 @@ FLASHMEM void recallPatch(int patchNo) {
     setCurrentPatchData(data);
     patchFile.close();
   }
-  //  renderCurrentPatchPage();
-  //  updateScreen();
-}
-
-FLASHMEM void reinitialiseToPanel() {
-  //This sets the current patch to be the same as the current hardware panel state - all the pots
-  //The four button controls stay the same state
-  //This reinialises the previous hardware values to force a re-read
-  muxInput = 0;
-  for (int i = 0; i < MUXCHANNELS; i++) {
-    mux1ValuesPrev[i] = RE_READ;
-    mux2ValuesPrev[i] = RE_READ;
-    mux3ValuesPrev[i] = RE_READ;
-    mux4ValuesPrev[i] = RE_READ;
-  }
-  patchName = INITPATCHNAME;
-  showPatchPage("Initial", "Panel Settings");
 }
 
 FLASHMEM void setCurrentPatchData(String data[]) {
@@ -335,6 +841,8 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 
   //Patchname
   updatePatchname();
+  //updateMainOctave();
+
 
   Serial.print("Set Patch: ");
   Serial.println(patchName);
@@ -344,11 +852,269 @@ FLASHMEM String getCurrentPatchData() {
   return patchName + "," + String(octave) + "," + String(octaveB) + "," + String(octaveC) + "," + String(shapeA) + "," + String(shapeB) + "," + String(shapeC) + "," + String(tuneB) + "," + String(tuneC) + "," + String(crossMod) + "," + String(vcoAvol) + "," + String(vcoBvol) + "," + String(vcoCvol) + "," + String(Subvol) + "," + String(cut) + "," + String(res) + "," + String(filtAtt) + "," + String(filtDec) + "," + String(filtAmt) + "," + String(filterMode) + "," + String(envAtt) + "," + String(envDec) + "," + String(envRel) + "," + String(envSus) + "," + String(lfoAamp) + "," + String(lfoAfreq) + "," + String(lfoAdel) + "," + String(lfoAatt) + "," + String(lfoAdec) + "," + String(lfoArel) + "," + String(lfoAsus) + "," + String(lfoBamp) + "," + String(lfoBfreq) + "," + String(dlyAmt) + "," + String(dlyTimeL) + "," + String(dlyTimeR) + "," + String(revMix) + "," + String(revSize) + "," + String(lfoAdest) + "," + String(lfoAshape);
 }
 
-void updatePatchname() {
-  showPatchPage(String(patchNo), patchName);
+FLASHMEM void checkMux() {
+
+  mux1Read = adc->adc0->analogRead(muxPots1);
+  mux2Read = adc->adc0->analogRead(muxPots2);
+  mux3Read = adc->adc0->analogRead(muxPots3);
+  mux4Read = adc->adc1->analogRead(muxPots4);
+  mux5Read = adc->adc1->analogRead(muxPots5);
+  mux6Read = adc->adc1->analogRead(muxPots6);
+
+  if (mux1Read > (mux1ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux1Read < (mux1ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
+    mux1ValuesPrev[muxInput] = mux1Read;
+
+    switch (muxInput) {
+      case 0:
+        mux0 = mux1Read;
+        updateFilterAttack();
+        break;
+      case 1:
+        mux1 = mux1Read;
+        updateFilterDecay();
+        break;
+      case 2:
+        mux2 = mux1Read;
+        updateFilterAmount();
+        break;
+      case 3:
+        mux3 = mux1Read;
+        updateLFOAmount();
+        break;
+      case 4:
+        mux4 = mux1Read;
+        updateLFOFreq();
+        break;
+      case 5:
+        mux5 = mux1Read;
+        updateLFOAttack();
+        break;
+      case 6:
+        mux6 = mux1Read;
+        updateLFODecay();
+        break;
+      case 7:
+        mux7 = mux1Read;
+        updateLFOSustain();
+        break;
+    }
+  }
+
+  if (mux2Read > (mux2ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux2Read < (mux2ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
+    mux2ValuesPrev[muxInput] = mux2Read;
+
+    switch (muxInput) {
+      case 0:
+        mux8 = mux2Read;
+        updateVolC();
+        break;
+      case 1:
+        mux9 = mux2Read;
+        updateVolB();
+        break;
+      case 2:
+        mux10 = mux2Read;
+        updateVolA();
+        break;
+      case 3:
+        mux11 = mux2Read;
+        updateShapeC();
+        break;
+      case 4:
+        mux12 = mux2Read;
+        updateTuneC();
+        break;
+      case 5:
+        mux13 = mux2Read;
+        updateTuneB();
+        break;
+      case 6:
+        mux14 = mux2Read;
+        updateCrossMod();
+        break;
+      case 7:
+        mux15 = mux2Read;
+        updatePWAmount();
+        break;
+    }
+  }
+
+  if (mux3Read > (mux3ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux3Read < (mux3ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
+    mux3ValuesPrev[muxInput] = mux3Read;
+
+    switch (muxInput) {
+      case 0:
+        mux16 = mux3Read;
+        updatePWFreq();
+        break;
+      case 1:
+        mux17 = mux3Read;
+        updateSubVol();
+        break;
+      case 2:
+        mux18 = mux3Read;
+        updateReverbMix();
+        break;
+      case 3:
+        mux19 = mux3Read;
+        updateReverbSize();
+        break;
+      case 4:
+        mux20 = mux3Read;
+        updateDelayTime();
+        break;
+      case 5:
+        mux21 = mux3Read;
+        updateDelayMix();
+        break;
+      case 6:
+        mux22 = mux3Read;
+        updateSustain();
+        break;
+      case 7:
+        mux23 = mux3Read;
+        updateVolume();
+        break;
+    }
+  }
+
+  if (mux4Read > (mux4ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
+    mux4ValuesPrev[muxInput] = mux4Read;
+
+    switch (muxInput) {
+      case 0:
+        mux24 = mux4Read;
+        updateRes();
+        break;
+      case 1:
+        mux25 = mux4Read;
+        updateCutoff();
+        break;
+      case 2:
+        mux26 = mux4Read;
+        updateDecay();
+        break;
+      case 3:
+        mux27 = mux4Read;
+        updateAttack();
+        break;
+      case 4:
+        mux28 = mux4Read;
+        break;
+      case 5:
+        mux29 = mux4Read;
+        break;
+      case 6:
+        mux30 = mux4Read;
+        break;
+      case 7:
+        FILTER_MODE = mux4Read;
+        updateFilterMode();
+        break;
+    }
+  }
+
+  if (mux5Read > (mux5ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux5Read < (mux5ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
+    mux5ValuesPrev[muxInput] = mux5Read;
+
+    switch (muxInput) {
+      case 0:
+        MONO_POLY_1 = mux5Read;
+        break;
+      case 1:
+        A_SHAPE_1 = mux5Read;
+        updateShapeA();
+        break;
+      case 2:
+        A_SHAPE_2 = mux5Read;
+        updateShapeA();
+        break;
+      case 3:
+        B_SHAPE_1 = mux5Read;
+        updateShapeB();
+        break;
+      case 4:
+        B_SHAPE_2 = mux5Read;
+        updateShapeB();
+        break;
+      case 5:
+        MAIN_OCT_1 = mux5Read;
+        updateMainOctave();
+        break;
+      case 6:
+        MAIN_OCT_2 = mux5Read;
+        updateMainOctave();
+        break;
+      case 7:
+        B_OCTAVE_1 = mux5Read;
+        updateOctaveB();
+        break;
+    }
+  }
+
+  if (mux6Read > (mux6ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux6Read < (mux6ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
+    mux6ValuesPrev[muxInput] = mux6Read;
+
+    switch (muxInput) {
+      case 0:
+        C_OCTAVE_1 = mux6Read;
+        updateOctaveC();
+        break;
+      case 1:
+        C_OCTAVE_2 = mux6Read;
+        updateOctaveC();
+        break;
+      case 2:
+        B_OCTAVE_2 = mux6Read;
+        updateOctaveB();
+        break;
+      case 3:
+        LFOA_SHAPE_1 = mux6Read;
+        updateLFOShape();
+        break;
+      case 4:
+        LFOA_SHAPE_2 = mux6Read;
+        updateLFOShape();
+        break;
+      case 5:
+        LFOA_DEST_1 = mux6Read;
+        updateLFODestination();
+        break;
+      case 6:
+        LFOA_DEST_2 = mux6Read;
+        updateLFODestination();
+        break;
+      case 7:
+        MONO_POLY_2 = mux6Read;
+        break;
+    }
+  }
+
+  muxInput++;
+  if (muxInput >= MUXCHANNELS)
+    muxInput = 0;
+
+  digitalWriteFast(MUX1, muxInput & B0001);
+  digitalWriteFast(MUX2, muxInput & B0010);
+  digitalWriteFast(MUX3, muxInput & B0100);
 }
 
-void allNotesOff() {
+void midiCCOut(byte cc, byte value, byte ccChannel) {
+  MIDI.sendControlChange(cc, value, ccChannel);     //MIDI DIN is set to Out
+  usbMIDI.sendControlChange(cc, value, ccChannel);  //MIDI DIN is set to Out
+}
+
+void midiProgOut(byte chg, byte channel) {
+  if (Program == true) {
+    if (chg < 113) {
+      MIDI.sendProgramChange(chg - 1, channel);     //MIDI DIN is set to Out
+      usbMIDI.sendProgramChange(chg - 1, channel);  //MIDI DIN is set to Out
+    }
+  }
+}
+
+void showSettingsPage() {
+  showSettingsPage(settings::current_setting(), settings::current_setting_value(), state);
 }
 
 void checkSwitches() {
@@ -370,17 +1136,26 @@ void checkSwitches() {
         case PARAMETER:
           if (patches.size() < PATCHES_LIMIT) {
             resetPatchesOrdering();  //Reset order of patches from first patch
-            patches.push({ patches.size() + 1, INITPATCHNAME });
+            if (addingPatch) {
+              patches.push({ patches.size() + 1, INITPATCHNAME });
+            } else {
+              patches.push({ patchNo, patchName });
+            }
             state = SAVE;
-            updateScreen();
           }
+          updateScreen();
           break;
         case SAVE:
           //Save as new patch with INITIALPATCH name or overwrite existing keeping name - bypassing patch renaming
           patchName = patches.last().patchName;
           state = PATCH;
-          updateScreen();
           savePatch(String(patches.last().patchNo).c_str(), getCurrentPatchData());
+          if (patchNo > 56 && patchNo < 113) {
+            if (saveMagicPatch) {
+              midiCCOut(CCuserMemory, (patchNo - 56), 1);
+              midiCCOut(CCpatchSave, 127, 1);
+            }
+          }
           showPatchPage(patches.last().patchNo, patches.last().patchName);
           patchNo = patches.last().patchNo;
           loadPatches();  //Get rid of pushed patch if it wasn't saved
@@ -388,13 +1163,17 @@ void checkSwitches() {
           renamedPatch = "";
           state = PARAMETER;
           updateScreen();
-
           break;
         case PATCHNAMING:
           if (renamedPatch.length() > 0) patchName = renamedPatch;  //Prevent empty strings
           state = PATCH;
-          updateScreen();
           savePatch(String(patches.last().patchNo).c_str(), getCurrentPatchData());
+          if (patchNo > 56 && patchNo < 113) {
+            if (saveMagicPatch) {
+              midiCCOut(CCuserMemory, (patchNo - 56), 1);
+              midiCCOut(CCpatchSave, 127, 1);
+            }
+          }
           showPatchPage(patches.last().patchNo, patchName);
           patchNo = patches.last().patchNo;
           loadPatches();  //Get rid of pushed patch if it wasn't saved
@@ -410,37 +1189,28 @@ void checkSwitches() {
   }
 
   settingsButton.update();
-  if (settingsButton.read() == LOW && settingsButton.duration() > HOLD_DURATION) {
+  if (settingsButton.held()) {
     //If recall held, set current patch to match current hardware state
     //Reinitialise all hardware values to force them to be re-read if different
     state = REINITIALISE;
     reinitialiseToPanel();
-    settingsButton.write(HIGH);  //Come out of this state
-    reini = true;
-    updateScreen();                          //Hack
-  } else if (settingsButton.risingEdge()) {  //cannot be fallingEdge because holding button won't work
-    if (!reini) {
-      switch (state) {
-        case PARAMETER:
-          settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
-          state = SETTINGS;
-          updateScreen();
-          break;
-        case SETTINGS:
-          settingsOptions.push(settingsOptions.shift());
-          settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
-        case SETTINGSVALUE:
-          //Same as pushing Recall - store current settings item and go back to options
-          settingsHandler(settingsOptions.first().value[settingsValueIndex], settingsOptions.first().handler);
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
-          state = SETTINGS;
-          updateScreen();
-          break;
-      }
-    } else {
-      reini = false;
+    updateScreen();
+  } else if (settingsButton.numClicks() == 1) {
+    switch (state) {
+      case PARAMETER:
+        state = SETTINGS;
+        showSettingsPage();
+        updateScreen();
+        break;
+      case SETTINGS:
+        showSettingsPage();
+        updateScreen();
+      case SETTINGSVALUE:
+        settings::save_current_value();
+        state = SETTINGS;
+        showSettingsPage();
+        updateScreen();
+        break;
     }
   }
 
@@ -448,8 +1218,9 @@ void checkSwitches() {
   if (backButton.read() == LOW && backButton.duration() > HOLD_DURATION) {
     //If Back button held, Panic - all notes off
     allNotesOff();
-    backButton.write(HIGH);              //Come out of this state
-    panic = true;                        //Hack
+    backButton.write(HIGH);  //Come out of this state
+    panic = true;
+    updateScreen();                      //Hack
   } else if (backButton.risingEdge()) {  //cannot be fallingEdge because holding button won't work
     if (!panic) {
       switch (state) {
@@ -474,15 +1245,15 @@ void checkSwitches() {
         case DELETE:
           setPatchesOrdering(patchNo);
           state = PARAMETER;
+          updateScreen();
           break;
         case SETTINGS:
           state = PARAMETER;
           updateScreen();
           break;
         case SETTINGSVALUE:
-          settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
           state = SETTINGS;
+          showSettingsPage();
           updateScreen();
           break;
       }
@@ -500,10 +1271,10 @@ void checkSwitches() {
     //Recall the current patch
     patchNo = patches.first().patchNo;
     recallPatch(patchNo);
-    updateScreen();
     state = PARAMETER;
     recallButton.write(HIGH);  //Come out of this state
     recall = true;             //Hack
+    updateScreen();
   } else if (recallButton.risingEdge()) {
     if (!recall) {
       switch (state) {
@@ -531,8 +1302,8 @@ void checkSwitches() {
             charIndex = 0;
             currentCharacter = CHARACTERS[charIndex];
             showRenamingPage(renamedPatch);
-            updateScreen();
           }
+          updateScreen();
           break;
         case DELETE:
           //Don't delete final patch
@@ -546,23 +1317,19 @@ void checkSwitches() {
             loadPatches();                      //Repopulate circular buffer again after delete
             patchNo = patches.first().patchNo;  //Go back to 1
             recallPatch(patchNo);               //Load first patch
-            updateScreen();
           }
           state = PARAMETER;
           updateScreen();
           break;
         case SETTINGS:
-          //Choose this option and allow value choice
-          settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGSVALUE);
           state = SETTINGSVALUE;
+          showSettingsPage();
           updateScreen();
           break;
         case SETTINGSVALUE:
-          //Store current settings item and go back to options
-          settingsHandler(settingsOptions.first().value[settingsValueIndex], settingsOptions.first().handler);
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+          settings::save_current_value();
           state = SETTINGS;
+          showSettingsPage();
           updateScreen();
           break;
       }
@@ -570,6 +1337,23 @@ void checkSwitches() {
       recall = false;
     }
   }
+}
+
+void reinitialiseToPanel() {
+  //This sets the current patch to be the same as the current hardware panel state - all the pots
+  //The four button controls stay the same state
+  //This reinialises the previous hardware values to force a re-read
+  muxInput = 0;
+  for (int i = 0; i < MUXCHANNELS; i++) {
+    mux1ValuesPrev[i] = RE_READ;
+    mux2ValuesPrev[i] = RE_READ;
+    mux3ValuesPrev[i] = RE_READ;
+    mux4ValuesPrev[i] = RE_READ;
+    mux5ValuesPrev[i] = RE_READ;
+    mux6ValuesPrev[i] = RE_READ;
+  }
+  patchName = INITPATCHNAME;
+  showPatchPage("Initial", "Panel Settings");
 }
 
 void checkEncoder() {
@@ -584,6 +1368,7 @@ void checkEncoder() {
         patches.push(patches.shift());
         patchNo = patches.first().patchNo;
         recallPatch(patchNo);
+        midiProgOut(patchNo, 1);
         state = PARAMETER;
         updateScreen();
         break;
@@ -606,14 +1391,13 @@ void checkEncoder() {
         updateScreen();
         break;
       case SETTINGS:
-        settingsOptions.push(settingsOptions.shift());
-        settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-        showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+        settings::increment_setting();
+        showSettingsPage();
         updateScreen();
         break;
       case SETTINGSVALUE:
-        if (settingsOptions.first().value[settingsValueIndex + 1] != '\0')
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[++settingsValueIndex], SETTINGSVALUE);
+        settings::increment_setting_value();
+        showSettingsPage();
         updateScreen();
         break;
     }
@@ -625,6 +1409,7 @@ void checkEncoder() {
         patches.unshift(patches.pop());
         patchNo = patches.first().patchNo;
         recallPatch(patchNo);
+        midiProgOut(patchNo, 1);
         state = PARAMETER;
         updateScreen();
         break;
@@ -633,6 +1418,7 @@ void checkEncoder() {
         updateScreen();
         break;
       case SAVE:
+        //if (patchNo < 57 ) patchNo = 57;
         patches.unshift(patches.pop());
         updateScreen();
         break;
@@ -648,14 +1434,13 @@ void checkEncoder() {
         updateScreen();
         break;
       case SETTINGS:
-        settingsOptions.unshift(settingsOptions.pop());
-        settingsValueIndex = getCurrentIndex(settingsOptions.first().currentIndex);
-        showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[settingsValueIndex], SETTINGS);
+        settings::decrement_setting();
+        showSettingsPage();
         updateScreen();
         break;
       case SETTINGSVALUE:
-        if (settingsValueIndex > 0)
-          showSettingsPage(settingsOptions.first().option, settingsOptions.first().value[--settingsValueIndex], SETTINGSVALUE);
+        settings::decrement_setting_value();
+        showSettingsPage();
         updateScreen();
         break;
     }
@@ -665,13 +1450,9 @@ void checkEncoder() {
 
 void loop() {
   checkMux();
-  updateParams();
-
   checkSwitches();
   checkEncoder();
-
-  //usbMIDI.read();
-  MIDI.read();
+  MIDI.read(midiChannel);
 
   //cross mod
   modMix1.gain(0, crossMod);
