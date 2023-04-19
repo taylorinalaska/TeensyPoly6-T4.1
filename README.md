@@ -6,7 +6,7 @@ I have tidied up the files so it now compiles properly
 
 The analogue interface now uses 6 MUX chips to read the pots and switches so there is no need to connect top the top or underneath of the Teensy 3.6 for the extra analogue inputs required. It runs smoother now as well.
 
-The schematics are a mess so I will redo them too.
+The schematics are upto date now with the latest mux changes.
 
 The synth is built using a teensy 3.6 overclocked to 192mhz and is programmed in Arduino IDE using the teensy audio library.
 
