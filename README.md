@@ -13,3 +13,7 @@ The schematics are upto date now with the latest mux changes.
 The synth is built using a teensy 3.6 overclocked to 192mhz and is programmed in Arduino IDE using the teensy audio library.
 
 Easily upgrade to a T4.1 or even a T4.0 as very few connections are required now. Increase of polyphony is probably available with a T4.x.
+
+How it sounds in the original keyboard form, this sound engine is unchanged.
+
+https://www.youtube.com/watch?v=Exk_K2VwGu0
