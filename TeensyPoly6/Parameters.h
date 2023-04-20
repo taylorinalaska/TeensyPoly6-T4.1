@@ -3,6 +3,7 @@ byte midiChannel = 0;
 
 byte pitchBendRange;
 byte modWheelDepth;
+byte afterTouchDepth;
 
 byte ccChannel = midiChannel;
 byte midiOutCh = midiChannel;

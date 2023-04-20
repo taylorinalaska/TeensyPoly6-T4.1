@@ -128,6 +128,7 @@ void setup() {
   midiChannel = getMIDIChannel();
   modWheelDepth = getModWheelDepth();
   pitchBendRange = getPitchBendRange();
+  afterTouchDepth = getafterTouchDepth();
 
   //vco setup
   vcoA1.begin(vcoVol, 150, WAVEFORM_SAWTOOTH);
@@ -783,7 +784,47 @@ void myControlChange(byte channel, byte control, byte value) {
   switch (control) {
 
     case CCmodwheel:
-      midiMod = (value << 3);
+      switch (modWheelDepth) {
+        case 1:
+          midiMod = ((value << 3) / 5);
+          break;
+
+        case 2:
+          midiMod = ((value << 3) / 4);
+          break;
+
+        case 3:
+          midiMod = ((value << 3) / 3.5);
+          break;
+
+        case 4:
+          midiMod = ((value << 3) / 3);
+          break;
+
+        case 5:
+          midiMod = ((value << 3) / 2.5);
+          break;
+
+        case 6:
+          midiMod = ((value << 3) / 2);
+          break;
+
+        case 7:
+          midiMod = ((value << 3) / 1.75);
+          break;
+
+        case 8:
+          midiMod = ((value << 3) / 1.5);
+          break;
+
+        case 9:
+          midiMod = ((value << 3) / 1.25);
+          break;
+
+        case 10:
+          midiMod = (value << 3);
+          break;
+      }
       oldmux3 = mux3;
       mux3 = mux3 + midiMod;
       if (mux3 > 1023) {
@@ -935,7 +976,47 @@ void myControlChange(byte channel, byte control, byte value) {
 }
 
 void myAfterTouch(byte channel, byte value) {
-  midiMod = (value << 3);
+  switch (afterTouchDepth) {
+    case 1:
+      midiMod = ((value << 3) / 5);
+      break;
+
+    case 2:
+      midiMod = ((value << 3) / 4);
+      break;
+
+    case 3:
+      midiMod = ((value << 3) / 3.5);
+      break;
+
+    case 4:
+      midiMod = ((value << 3) / 3);
+      break;
+
+    case 5:
+      midiMod = ((value << 3) / 2.5);
+      break;
+
+    case 6:
+      midiMod = ((value << 3) / 2);
+      break;
+
+    case 7:
+      midiMod = ((value << 3) / 1.75);
+      break;
+
+    case 8:
+      midiMod = ((value << 3) / 1.5);
+      break;
+
+    case 9:
+      midiMod = ((value << 3) / 1.25);
+      break;
+
+    case 10:
+      midiMod = (value << 3);
+      break;
+  }
   oldmux3 = mux3;
   mux3 = mux3 + midiMod;
   if (mux3 > 1023) {
