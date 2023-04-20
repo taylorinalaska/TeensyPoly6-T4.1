@@ -21,7 +21,7 @@ https://www.youtube.com/watch?v=Exk_K2VwGu0
 * Triple VCOs with octave +/- shift.
 * Osc A with SAW, PULSE (PWM) and TRIANGLE waves, plus SUB and Crossmod
 * Osc B with SAW, PULSE (PWM) and TRIANGLE waves, plus tuning, oct +/-
-* Osc B with 28 waves, plus tuning, oct +/-
+* Osc C with 28 waves, plus tuning, oct +/-
 * HP/BP filter with resonance and env +/- for A/D/R
 * LFO with SAW, TRIANGLE and SAMPLE & HOLD waves
 * Modulation destinations for FM. TM and AM
