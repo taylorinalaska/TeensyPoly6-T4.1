@@ -10,7 +10,7 @@ The analogue interface now uses 6 MUX chips to read the pots and switches so the
 
 The schematics are upto date now with the latest mux changes.
 
-The synth is built using a teensy 3.6 overclocked to 192mhz and is programmed in Arduino IDE using the teensy audio library.
+The synth is built using a teensy 3.6 overclocked to 192Mhz and is programmed in Arduino IDE using the teensy audio library.
 
 Easily upgrade to a T4.1 or even a T4.0 as very few connections are required now. Increase of polyphony is probably available with a T4.x.
 
