@@ -37,7 +37,7 @@ void storeEncoderDir(byte encoderDir) {
 
 int getPitchBendRange() {
   byte pitchbend = EEPROM.read(EEPROM_PITCHBEND);
-  if (pitchbend < 1 || pitchbend > 12) return pitchBendRange;  //If EEPROM has no pitchbend stored
+  if (pitchbend < 0 || pitchbend > 2) return pitchBendRange;  //If EEPROM has no pitchbend stored
   return pitchbend;
 }
 
@@ -47,7 +47,7 @@ void storePitchBendRange(byte pitchbend) {
 
 float getModWheelDepth() {
   byte mw = EEPROM.read(EEPROM_MODWHEEL_DEPTH);
-  if (mw < 1 || mw > 10) return modWheelDepth;  //If EEPROM has no mod wheel depth stored
+  if (mw < 0 || mw > 10) return modWheelDepth;  //If EEPROM has no mod wheel depth stored
   return mw;
 }
 
@@ -57,7 +57,7 @@ void storeModWheelDepth(byte mw) {
 
 float getafterTouchDepth() {
   byte atdepth = EEPROM.read(EEPROM_AFTERTOUCH_DEPTH);
-  if (atdepth < 1 || atdepth > 10) return afterTouchDepth;  //If EEPROM has no mod wheel depth stored
+  if (atdepth < 0 || atdepth > 10) return afterTouchDepth;  //If EEPROM has no mod wheel depth stored
   return atdepth;
 }
 

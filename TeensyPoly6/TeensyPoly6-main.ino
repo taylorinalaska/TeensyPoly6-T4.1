@@ -138,34 +138,34 @@ void setup() {
       detune = 1.000;
       break;
     case 1:
-      detune = 1.001;
-      break;
-    case 2:
       detune = 1.002;
       break;
-    case 3:
-      detune = 1.003;
-      break;
-    case 4:
+    case 2:
       detune = 1.004;
       break;
-    case 5:
-      detune = 1.005;
-      break;
-    case 6:
+    case 3:
       detune = 1.006;
       break;
-    case 7:
-      detune = 1.007;
-      break;
-    case 8:
+    case 4:
       detune = 1.008;
       break;
+    case 5:
+      detune = 1.010;
+      break;
+    case 6:
+      detune = 1.012;
+      break;
+    case 7:
+      detune = 1.014;
+      break;
+    case 8:
+      detune = 1.016;
+      break;
     case 9:
-      detune = 1.009;
+      detune = 1.018;
       break;
     case 10:
-      detune = 1.010;
+      detune = 1.020;
       break;
   }
   olddetune = detune;
@@ -1041,6 +1041,10 @@ void myControlChange(byte channel, byte control, byte value) {
 
     case CCmodwheel:
       switch (modWheelDepth) {
+        case 0:
+          midiMod = 0;
+          break;
+
         case 1:
           midiMod = ((value << 3) / 5);
           break;
@@ -1233,6 +1237,10 @@ void myControlChange(byte channel, byte control, byte value) {
 
 void myAfterTouch(byte channel, byte value) {
   switch (afterTouchDepth) {
+    case 0:
+      midiMod = 0;
+      break;
+
     case 1:
       midiMod = ((value << 3) / 5);
       break;
@@ -1637,34 +1645,34 @@ void updateEEPromSettings() {
         detune = 1.000;
         break;
       case 1:
-        detune = 1.001;
-        break;
-      case 2:
         detune = 1.002;
         break;
-      case 3:
-        detune = 1.003;
-        break;
-      case 4:
+      case 2:
         detune = 1.004;
         break;
-      case 5:
-        detune = 1.005;
-        break;
-      case 6:
+      case 3:
         detune = 1.006;
         break;
-      case 7:
-        detune = 1.007;
-        break;
-      case 8:
+      case 4:
         detune = 1.008;
         break;
+      case 5:
+        detune = 1.010;
+        break;
+      case 6:
+        detune = 1.012;
+        break;
+      case 7:
+        detune = 1.014;
+        break;
+      case 8:
+        detune = 1.016;
+        break;
       case 9:
-        detune = 1.009;
+        detune = 1.018;
         break;
       case 10:
-        detune = 1.010;
+        detune = 1.020;
         break;
     }
     oldunidetune = unidetune;

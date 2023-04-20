@@ -35,28 +35,40 @@ void settingsEncoderDir(int index, const char *value) {
 }
 
 void settingsPitchBend(int index, const char *value) {
-  pitchBendRange = atoi(value);
+  if (strcmp(value, "Off") == 0) {
+    pitchBendRange = 0;
+  } else {
+    pitchBendRange = atoi(value);
+  }
   storePitchBendRange(pitchBendRange);
 }
 
 void settingsModWheelDepth(int index, const char *value) {
-  modWheelDepth = atoi(value);
+  if (strcmp(value, "Off") == 0) {
+    modWheelDepth = 0;
+  } else {
+    modWheelDepth = atoi(value);
+  }
   storeModWheelDepth(modWheelDepth);
 }
 
 void settingsafterTouchDepth(int index, const char *value) {
-  afterTouchDepth = atoi(value);
+  if (strcmp(value, "Off") == 0) {
+    afterTouchDepth = 0;
+  } else {
+    afterTouchDepth = atoi(value);
+  }
   storeafterTouchDepth(afterTouchDepth);
 }
 
-void settingsNotePriority(int index, const char * value) {
+void settingsNotePriority(int index, const char *value) {
   if (strcmp(value, "Top") == 0) NP = 0;
   if (strcmp(value, "Bottom") == 0) NP = 1;
   if (strcmp(value, "Last") == 0) NP = 2;
   storeNotePriority(NP);
 }
 
-void settingsUnisonDetune(int index, const char * value) {
+void settingsUnisonDetune(int index, const char *value) {
   if (strcmp(value, "Off") == 0) unidetune = 0;
   if (strcmp(value, "1") == 0) unidetune = 1;
   if (strcmp(value, "2") == 0) unidetune = 2;
@@ -80,15 +92,15 @@ int currentIndexEncoderDir() {
 }
 
 int currentIndexPitchBend() {
-  return getPitchBendRange() - 1;
+  return getPitchBendRange();
 }
 
 int currentIndexModWheelDepth() {
-  return getModWheelDepth() - 1;
+  return getModWheelDepth();
 }
 
 int currentIndexafterTouchDepth() {
-  return getafterTouchDepth() - 1;
+  return getafterTouchDepth();
 }
 
 int currentIndexNotePriority() {
@@ -102,10 +114,10 @@ int currentIndexUnisonDetune() {
 // add settings to the circular buffer
 void setUpSettings() {
   settings::append(settings::SettingsOption{ "MIDI In Ch.", { "All", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "\0" }, settingsMIDICh, currentIndexMIDICh });
-  settings::append(settings::SettingsOption{ "Key Priority", {"Top", "Bottom", "Last", "\0"}, settingsNotePriority, currentIndexNotePriority});
-  settings::append(settings::SettingsOption{ "Unison Det", {"Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0"}, settingsUnisonDetune, currentIndexUnisonDetune});
+  settings::append(settings::SettingsOption{ "Key Priority", { "Top", "Bottom", "Last", "\0" }, settingsNotePriority, currentIndexNotePriority });
+  settings::append(settings::SettingsOption{ "Unison Det", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsUnisonDetune, currentIndexUnisonDetune });
   settings::append(settings::SettingsOption{ "Encoder", { "Type 1", "Type 2", "\0" }, settingsEncoderDir, currentIndexEncoderDir });
-  settings::append(settings::SettingsOption{ "Pitch Bend", { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "\0" }, settingsPitchBend, currentIndexPitchBend });
-  settings::append(settings::SettingsOption{ "MW Depth", { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsModWheelDepth, currentIndexModWheelDepth });
-  settings::append(settings::SettingsOption{ "AT Depth", { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsafterTouchDepth, currentIndexafterTouchDepth });
+  settings::append(settings::SettingsOption{ "Pitch Bend", { "Off", "1", "2", "\0" }, settingsPitchBend, currentIndexPitchBend });
+  settings::append(settings::SettingsOption{ "MW Depth", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsModWheelDepth, currentIndexModWheelDepth });
+  settings::append(settings::SettingsOption{ "AT Depth", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsafterTouchDepth, currentIndexafterTouchDepth });
 }
