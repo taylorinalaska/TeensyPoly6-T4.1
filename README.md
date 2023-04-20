@@ -2,6 +2,8 @@ Teensy-Poly6
 
 This is a polyphonic synth forked from albnys/TeensyPoly6 converted into a 2U 19" rack.
 
+![Synth](photos/synth.jpg)
+
 I have tidied up the files so it now compiles properly
 
 The analogue interface now uses 6 MUX chips to read the pots and switches so there is no need to connect top the top or underneath of the Teensy 3.6 for the extra analogue inputs required. It runs smoother now as well.
