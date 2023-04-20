@@ -493,16 +493,20 @@ void allNotesOff() {
 
 FLASHMEM void updateVolume() {
   mainVol = (float)mux23 / 1024;
+  midiCCOut(CCvolumeControl, (mux23 >> 3), 1);
 }
 
 //main octave
 FLASHMEM void updateMainOctave() {
   if (MAIN_OCT_1 > 511) {
     octave = 0.5;
+    midiCCOut(CCoctave_1, 0, 1);
   } else if (MAIN_OCT_1 < 511 && MAIN_OCT_2 < 511) {
     octave = 1;
+    midiCCOut(CCoctave_1, 63, 1);
   } else if (MAIN_OCT_2 > 511) {
     octave = 2;
+    midiCCOut(CCoctave_1, 127, 1);
   }
 }
 
@@ -514,10 +518,13 @@ FLASHMEM void updateMainOctave() {
 FLASHMEM void updateOctaveB() {
   if (B_OCTAVE_1 > 511) {
     octaveB = 0.5;
+    midiCCOut(CCosc_b_oct_1, 0, 1);
   } else if (B_OCTAVE_1 < 511 && B_OCTAVE_2 < 511) {
     octaveB = 1;
+    midiCCOut(CCosc_b_oct_1, 63, 1);
   } else if (B_OCTAVE_2 > 511) {
     octaveB = 2;
+    midiCCOut(CCosc_b_oct_1, 127, 1);
   }
 }
 
@@ -526,10 +533,13 @@ FLASHMEM void updateOctaveB() {
 FLASHMEM void updateOctaveC() {
   if (C_OCTAVE_1 > 511) {
     octaveC = 0.5;
+    midiCCOut(CCosc_c_oct_1, 0, 1);
   } else if (C_OCTAVE_1 < 511 && C_OCTAVE_2 < 511) {
     octaveC = 1;
+    midiCCOut(CCosc_c_oct_1, 63, 1);
   } else if (C_OCTAVE_2 > 511) {
     octaveC = 2;
+    midiCCOut(CCosc_c_oct_1, 127, 1);
   }
 }
 
@@ -537,10 +547,13 @@ FLASHMEM void updateOctaveC() {
 FLASHMEM void updateShapeA() {
   if (A_SHAPE_1 > 511) {
     shapeA = 0;
+    midiCCOut(CCosc_a_shape_1, 0, 1);
   } else if (A_SHAPE_1 < 511 && A_SHAPE_2 < 511) {
     shapeA = 1;
+    midiCCOut(CCosc_a_shape_1, 63, 1);
   } else if (A_SHAPE_2 > 511) {
     shapeA = 2;
+    midiCCOut(CCosc_a_shape_1, 127, 1);
   }
 }
 
@@ -548,16 +561,20 @@ FLASHMEM void updateShapeA() {
 FLASHMEM void updateShapeB() {
   if (B_SHAPE_1 > 511) {
     shapeB = 0;
+    midiCCOut(CCosc_b_shape_1, 0, 1);
   } else if (B_SHAPE_1 < 511 && B_SHAPE_2 < 511) {
     shapeB = 1;
+    midiCCOut(CCosc_b_shape_1, 63, 1);
   } else if (B_SHAPE_2 > 511) {
     shapeB = 2;
+    midiCCOut(CCosc_b_shape_1, 127, 1);
   }
 }
 
 //Vco C shape
 FLASHMEM void updateShapeC() {
   shapeC = mux11;
+  midiCCOut(CCosc_C_shape, (mux11 >> 3), 1);
   //Serial.println("Shape C ");
 }
 
@@ -568,6 +585,7 @@ FLASHMEM void updateTuneB() {
   } else {
     tuneB = ((float)mux13 / 510);
   }
+  midiCCOut(CCosc_B_freq, (mux13 >> 3), 1);
 }
 
 //tuneC
@@ -577,72 +595,88 @@ FLASHMEM void updateTuneC() {
   } else {
     tuneC = ((float)mux12 / 510);
   }
+  midiCCOut(CCosc_C_freq, (mux12 >> 3), 1);
 }
 
 //Cross mod
 FLASHMEM void updateCrossMod() {
   crossMod = (float)mux14 / 512;
+  midiCCOut(CCcrossmod, (mux14 >> 3), 1);
 }
 
 
 FLASHMEM void updateVolA() {
   vcoAvol = (float)mux10 / 1023;
+  midiCCOut(CCosc_A_vol, (mux10 >> 3), 1);
 }
 
 FLASHMEM void updateVolB() {
   vcoBvol = (float)mux9 / 1023;
+  midiCCOut(CCosc_B_vol, (mux9 >> 3), 1);
 }
 
 FLASHMEM void updateVolC() {
   vcoCvol = (float)mux8 / 1023;
+  midiCCOut(CCosc_C_vol, (mux8 >> 3), 1);
 }
 
 FLASHMEM void updateSubVol() {
   Subvol = (float)mux17 / 1023;
+  midiCCOut(CCosc_Subvol, (mux17 >> 3), 1);
 }
 
 //Filter
 FLASHMEM void updateCutoff() {
   cut = 15000 * (float)mux25 / 1023 + 15;  /////cut
+  midiCCOut(CCvcf_frequency, (mux25 >> 3), 1);
 }
 
 FLASHMEM void updateRes() {
   res = 4.5 * (float)mux24 / 1023 + 1.1;
+  midiCCOut(CCvcf_resonance, (mux24 >> 3), 1);
 }
 
 //Filter Env
 
 FLASHMEM void updateFilterAttack() {
   filtAtt = (3000 * (float)mux0 / 1023);
+  midiCCOut(CCvcf_attack, (mux0 >> 3), 1);
 }
 
 FLASHMEM void updateFilterDecay() {
   filtDec = (3000 * (float)mux1 / 1023);
+  midiCCOut(CCvcf_decay, (mux1 >> 3), 1);
 }
 
 FLASHMEM void updateFilterAmount() {
   filtAmt = (float)mux2 / 512 - 1;
+  midiCCOut(CCvcf_env_amount, (mux2 >> 3), 1);
 }
 
 FLASHMEM void updateFilterMode() {
   if (FILTER_MODE > 511) {
     filterMode = 1;
+    midiCCOut(CCfiltermode, 127, 1);
   } else if (FILTER_MODE < 511) {
     filterMode = 0;
+    midiCCOut(CCfiltermode, 0, 1);
   }
 }
 
 FLASHMEM void updateAttack() {
   envAtt = 3000 * (float)mux27 / 1023;
+  midiCCOut(CCvca_attack, (mux27 >> 3), 1);
 }
 
 FLASHMEM void updateDecay() {
   envDec = 5000 * (float)mux26 / 1023;
   envRel = 5000 * (float)mux26 / 1023;
+  midiCCOut(CCvca_decay, (mux26 >> 3), 1);
 }
 
 FLASHMEM void updateSustain() {
   envSus = (float)mux22 / 100;
+  midiCCOut(CCvca_sustain, (mux22 >> 3), 1);
 }
 
 FLASHMEM void updateLFOAmount() {
@@ -651,34 +685,42 @@ FLASHMEM void updateLFOAmount() {
   } else {
     lfoAamp = ((float)mux3) / 1024 / 3;
   }
+  midiCCOut(CCmodulation, (mux3 >> 3), 1);
 }
 
 FLASHMEM void updateLFOFreq() {
   lfoAfreq = 20 * (float)mux4 / 1024 + 0.1;
+  midiCCOut(CClfo_frequency, (mux4 >> 3), 1);
 }
 
 FLASHMEM void updateLFOAttack() {
   lfoAdel = 2000 * (float)mux5 / 1024;
   lfoAatt = 3000 * (float)mux5 / 1024;
+  midiCCOut(CClfo_attack, (mux5 >> 3), 1);
 }
 
 FLASHMEM void updateLFODecay() {
   lfoAdec = 4000 * (float)mux6 / 1024;
   lfoArel = 4000 * (float)mux6 / 1024;
+  midiCCOut(CClfo_decay, (mux6 >> 3), 1);
 }
 
 FLASHMEM void updateLFOSustain() {
   lfoAsus = (float)mux7 / 1024;
+  midiCCOut(CClfo_sustain, (mux7 >> 3), 1);
 }
 
 
 FLASHMEM void updateLFODestination() {
   if (LFOA_DEST_1 > 511) {  //lfo - pitch
     lfoAdest = 0;
+    midiCCOut(CClfo_dest_1, 0, 1);
   } else if (LFOA_DEST_1 < 511 && LFOA_DEST_2 < 511) {  //lfo - filter
     lfoAdest = 1;
+    midiCCOut(CClfo_dest_1, 63, 1);
   } else if (LFOA_DEST_2 > 511) {  //lfo - amp
     lfoAdest = 2;
+    midiCCOut(CClfo_dest_1, 127, 1);
   }
 }
 
@@ -686,19 +728,24 @@ FLASHMEM void updateLFODestination() {
 FLASHMEM void updateLFOShape() {
   if (LFOA_SHAPE_1 > 511) {
     lfoAshape = 0;
+    midiCCOut(CClfo_wave_1, 0, 1);
   } else if (LFOA_SHAPE_1 < 511 && LFOA_SHAPE_2 < 511) {
     lfoAshape = 1;
+    midiCCOut(CClfo_wave_1, 63, 1);
   } else if (LFOA_SHAPE_2 > 511) {
     lfoAshape = 2;
+    midiCCOut(CClfo_wave_1, 127, 1);
   }
 }
 
 FLASHMEM void updatePWAmount() {
   lfoBamp = (float)mux15 / 1023;
+  midiCCOut(CCoscpwm, (mux15 >> 3), 1);
 }
 
 FLASHMEM void updatePWFreq() {
   lfoBfreq = 5 * (float)mux16 / 1023 + 0.1;
+  midiCCOut(CCoscpwmrate, (mux16 >> 3), 1);
 }
 
 //Delay
@@ -707,20 +754,24 @@ FLASHMEM void updateDelayMix() {
   if (dlyAmt < 0) {
     dlyAmt = 0;
   }
+  midiCCOut(CCdly_amt, (mux21 >> 3), 1);
 }
 
 FLASHMEM void updateDelayTime() {
   dlyTimeL = mux20 / 2.5;
   dlyTimeR = mux20 / 1.25;
+  midiCCOut(CCdly_size, (mux20 >> 3), 1);
 }
 
 //Reverb
 FLASHMEM void updateReverbMix() {
   revMix = ((float)mux18 / 1024 / 1.2);
+  midiCCOut(CCrev_amt, (mux18 >> 3), 1);
 }
 
 FLASHMEM void updateReverbSize() {
   revSize = ((float)mux19 / 1024 - 0.01);
+  midiCCOut(CCrev_size, (mux19 >> 3), 1);
 }
 
 void updatePatchname() {
@@ -756,6 +807,130 @@ void myControlChange(byte channel, byte control, byte value) {
       mux24 = (value << 3);
       updateRes();
       break;
+
+    case CCvcf_attack:
+      mux0 = (value << 3);
+      updateFilterAttack();
+      break;
+
+    case CCvcf_decay:
+      mux1 = (value << 3);
+      updateFilterDecay();
+      break;
+
+    case CCvcf_env_amount:
+      mux2 = (value << 3);
+      updateFilterAmount();
+      break;
+
+    case CClfo_frequency:
+      mux4 = (value << 3);
+      updateLFOFreq();
+      break;
+
+    case CCmodulation:
+      mux3 = (value << 3);
+      updateLFOAmount();
+      break;
+
+    case CClfo_attack:
+      mux5 = (value << 3);
+      updateLFOAttack();
+      break;
+
+    case CClfo_decay:
+      mux6 = (value << 3);
+      updateLFODecay();
+      break;
+
+    case CClfo_sustain:
+      mux7 = (value << 3);
+      updateLFOSustain();
+      break;
+
+    case CCvca_attack:
+      mux27 = (value << 3);
+      updateAttack();
+      break;
+
+    case CCvca_decay:
+      mux26 = (value << 3);
+      updateDecay();
+      break;
+
+    case CCvca_sustain:
+      mux22 = (value << 3);
+      updateSustain();
+      break;
+
+    case CCoscpwmrate:
+      mux16 = (value << 3);
+      updatePWFreq();
+      break;
+
+    case CCoscpwm:
+      mux15 = (value << 3);
+      updatePWAmount();
+      break;
+
+    case CCosc_B_freq:
+      mux13 = (value << 3);
+      updateTuneB();
+      break;
+
+    case CCosc_C_freq:
+      mux12 = (value << 3);
+      updateTuneC();
+      break;
+
+    case CCosc_A_vol:
+      mux10 = (value << 3);
+      updateVolA();
+      break;
+
+    case CCosc_B_vol:
+      mux9 = (value << 3);
+      updateVolB();
+      break;
+
+    case CCosc_C_vol:
+      mux8 = (value << 3);
+      updateVolC();
+      break;
+
+    case CCosc_Subvol:
+      mux17 = (value << 3);
+      updateSubVol();
+      break;
+
+    case CCosc_C_shape:
+      mux11 = (value << 3);
+      updateShapeC();
+      break;
+
+    case CCcrossmod:
+      mux14 = (value << 3);
+      updateCrossMod();
+      break;
+
+    case CCrev_size:
+      mux19 = (value << 3);
+      updateReverbSize();
+      break;
+
+    case CCrev_amt:
+      mux18 = (value << 3);
+      updateReverbMix();
+      break;
+
+    case CCdly_size:
+      mux21 = (value << 3);
+      updateDelayTime();
+      break;
+
+    case CCdly_amt:
+      mux20 = (value << 3);
+      updateDelayMix();
   }
 }
 
@@ -1150,12 +1325,6 @@ void checkSwitches() {
           patchName = patches.last().patchName;
           state = PATCH;
           savePatch(String(patches.last().patchNo).c_str(), getCurrentPatchData());
-          if (patchNo > 56 && patchNo < 113) {
-            if (saveMagicPatch) {
-              midiCCOut(CCuserMemory, (patchNo - 56), 1);
-              midiCCOut(CCpatchSave, 127, 1);
-            }
-          }
           showPatchPage(patches.last().patchNo, patches.last().patchName);
           patchNo = patches.last().patchNo;
           loadPatches();  //Get rid of pushed patch if it wasn't saved
@@ -1168,12 +1337,6 @@ void checkSwitches() {
           if (renamedPatch.length() > 0) patchName = renamedPatch;  //Prevent empty strings
           state = PATCH;
           savePatch(String(patches.last().patchNo).c_str(), getCurrentPatchData());
-          if (patchNo > 56 && patchNo < 113) {
-            if (saveMagicPatch) {
-              midiCCOut(CCuserMemory, (patchNo - 56), 1);
-              midiCCOut(CCpatchSave, 127, 1);
-            }
-          }
           showPatchPage(patches.last().patchNo, patchName);
           patchNo = patches.last().patchNo;
           loadPatches();  //Get rid of pushed patch if it wasn't saved
@@ -1453,6 +1616,7 @@ void loop() {
   checkSwitches();
   checkEncoder();
   MIDI.read(midiChannel);
+  usbMIDI.read(midiChannel);
 
   //cross mod
   modMix1.gain(0, crossMod);
