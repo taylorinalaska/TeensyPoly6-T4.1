@@ -17,3 +17,20 @@ Easily upgrade to a T4.1 or even a T4.0 as very few connections are required now
 How it sounds in the original keyboard form, this sound engine is unchanged.
 
 https://www.youtube.com/watch?v=Exk_K2VwGu0
+
+* Triple VCOs with octave +/- shift.
+* Osc A with SAW, PULSE (PWM) and TRIANGLE waves, plus SUB and Crossmod
+* Osc B with SAW, PULSE (PWM) and TRIANGLE waves, plus tuning, oct +/-
+* Osc B with 28 waves, plus tuning, oct +/-
+* HP/BP filter with resonance and env +/- for A/D/R
+* LFO with SAW, TRIANGLE and SAMPLE & HOLD waves
+* Modulation destinations for FM. TM and AM
+* LFO attack, decay and sustain with depth control
+* PWM LFO with rate and depth
+* Digital reverb with size and mix amount
+* Digital delay with time and mix amount
+* Mono, Poly and Unison (two voices) modes, detune for the Unison
+* Note priorities for Mono and Unison modes, Top, Bottom, Last.
+* MIDI modulation, aftertouch, CC messages for controls, channel change, pitchbend.
+* 999 memories with storage of all front panel controls except volume.
+* MIDI In, Out, Thru
