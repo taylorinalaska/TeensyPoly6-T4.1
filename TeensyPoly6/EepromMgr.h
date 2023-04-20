@@ -6,9 +6,9 @@
 #define EEPROM_ENCODER_DIR 3
 #define EEPROM_PICKUP_ENABLE 4
 #define EEPROM_AFTERTOUCH_DEPTH 5
-#define EEPROM_SCOPE_ENABLE 6
+#define EEPROM_NOTE_PRIORITY 6
 #define EEPROM_MIDI_OUT_CH 7
-#define EEPROM_VU_ENABLE 8
+#define EEPROM_UNISON_DETUNE 8
 #define EEPROM_MIDI_THRU 9
 #define EEPROM_AMP_ENV 10
 #define EEPROM_FILT_ENV 11
@@ -63,4 +63,24 @@ float getafterTouchDepth() {
 
 void storeafterTouchDepth(byte atdepth) {
   EEPROM.update(EEPROM_AFTERTOUCH_DEPTH, atdepth);
+}
+
+int getNotePriority() {
+  byte np = EEPROM.read(EEPROM_NOTE_PRIORITY);
+  if (np < 0 || np > 2) np = 0;  //If EEPROM has no MIDI channel stored
+  return np;
+}
+
+void storeNotePriority(byte np) {
+  EEPROM.update(EEPROM_NOTE_PRIORITY, np);
+}
+
+int getUnisonDetune() {
+  byte det = EEPROM.read(EEPROM_UNISON_DETUNE);
+  if (det < 0 || det > 10) det = 0;  //If EEPROM has no MIDI channel stored
+  return det;
+}
+
+void storeUnisonDetune(byte det) {
+  EEPROM.update(EEPROM_UNISON_DETUNE, det);
 }

@@ -4,6 +4,7 @@ byte midiChannel = 0;
 byte pitchBendRange;
 byte modWheelDepth;
 byte afterTouchDepth;
+byte NP;
 
 byte ccChannel = midiChannel;
 byte midiOutCh = midiChannel;
@@ -27,7 +28,6 @@ int returnvalue = 0;
 
 boolean pickUp = true;  //settings option (EEPROM)
 boolean pickUpActive = false;
-boolean Detune = false;
 boolean modAmount = false;
 boolean saveMagicPatch = false;
 boolean addingPatch = false;
@@ -346,6 +346,10 @@ float octaveB = 1;
 float octaveC = 1;
 float tuneB = 1;
 float tuneC = 1;
+byte unidetune = 0;
+byte oldunidetune = 0;
+float detune = 1.000;
+float olddetune = 1.000;
 
 //vco shapes
 int shapeA;

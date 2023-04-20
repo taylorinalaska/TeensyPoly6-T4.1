@@ -78,6 +78,7 @@ boolean voiceOn[NO_OF_VOICES] = { false, false, false, false, false, false };
 int prevNote = 0;  //Initialised to middle value
 bool notes[88] = { 0 }, initial_loop = 1;
 int8_t noteOrder[80] = { 0 }, orderIndx = { 0 };
+int noteMsg;
 
 void setup() {
   AudioMemory(470);
@@ -129,6 +130,45 @@ void setup() {
   modWheelDepth = getModWheelDepth();
   pitchBendRange = getPitchBendRange();
   afterTouchDepth = getafterTouchDepth();
+  NP = getNotePriority();
+  unidetune = getUnisonDetune();
+  oldunidetune = unidetune;
+  switch (unidetune) {
+    case 0:
+      detune = 1.000;
+      break;
+    case 1:
+      detune = 1.001;
+      break;
+    case 2:
+      detune = 1.002;
+      break;
+    case 3:
+      detune = 1.003;
+      break;
+    case 4:
+      detune = 1.004;
+      break;
+    case 5:
+      detune = 1.005;
+      break;
+    case 6:
+      detune = 1.006;
+      break;
+    case 7:
+      detune = 1.007;
+      break;
+    case 8:
+      detune = 1.008;
+      break;
+    case 9:
+      detune = 1.009;
+      break;
+    case 10:
+      detune = 1.010;
+      break;
+  }
+  olddetune = detune;
 
   //vco setup
   vcoA1.begin(vcoVol, 150, WAVEFORM_SAWTOOTH);
@@ -308,7 +348,8 @@ int getVoiceNo(int note) {
 
 void myNoteOn(byte channel, byte note, byte velocity) {
 
-  if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {  //POLYPHONIC mode
+  if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {
+    detune = 1.000;  //POLYPHONIC mode
     if (note < 0 || note > 127) return;
     switch (getVoiceNo(-1)) {
       case 1:
@@ -374,38 +415,68 @@ void myNoteOn(byte channel, byte note, byte velocity) {
   }
 
   if (MONO_POLY_1 > 511 && MONO_POLY_2 < 511) {  //UNISON mode
-    if (note < 0 || note > 127) return;
-    voices[0].note = note;
-    note1freq = note;
-    env1.noteOn();
-    filterEnv1.noteOn();
-    lfoAenv1.noteOn();
-    env1on = true;
-    voiceOn[0] = true;
+    detune = olddetune;
+    noteMsg = note;
 
-    voices[1].note = note;
-    note2freq = note;
-    env2.noteOn();
-    filterEnv2.noteOn();
-    lfoAenv2.noteOn();
-    env2on = true;
-    voiceOn[1] = true;
+    if (velocity == 0) {
+      notes[noteMsg] = false;
+    } else {
+      notes[noteMsg] = true;
+    }
+
+    switch (NP) {
+      case 0:
+        commandTopNoteUnison();
+        break;
+
+      case 1:
+        commandBottomNoteUnison();
+        break;
+
+      case 2:
+        if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
+          orderIndx = (orderIndx + 1) % 40;
+          noteOrder[orderIndx] = noteMsg;
+        }
+        commandLastNoteUnison();
+        break;
+    }
   }
 
   if (MONO_POLY_1 < 511 && MONO_POLY_2 > 511) {
-    voices[0].note = note;
-    note1freq = note;
-    env1.noteOn();
-    filterEnv1.noteOn();
-    lfoAenv1.noteOn();
-    env1on = true;
-    voiceOn[0] = true;
+    detune = 1.000;
+    noteMsg = note;
+
+    if (velocity == 0) {
+      notes[noteMsg] = false;
+    } else {
+      notes[noteMsg] = true;
+    }
+
+    switch (NP) {
+      case 0:
+        commandTopNote();
+        break;
+
+      case 1:
+        commandBottomNote();
+        break;
+
+      case 2:
+        if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
+          orderIndx = (orderIndx + 1) % 40;
+          noteOrder[orderIndx] = noteMsg;
+        }
+        commandLastNote();
+        break;
+    }
   }
 }
 
 void myNoteOff(byte channel, byte note, byte velocity) {
 
   if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {  //POLYPHONIC mode
+    detune = 1.000;
     switch (getVoiceNo(note)) {
       case 1:
         env1.noteOff();
@@ -464,29 +535,214 @@ void myNoteOff(byte channel, byte note, byte velocity) {
   }
 
   if (MONO_POLY_1 > 511 && MONO_POLY_2 < 511) {  //UNISON
-    env1.noteOff();
-    filterEnv1.noteOff();
-    lfoAenv1.noteOff();
-    env1on = false;
-    voices[0].note = -1;
-    voiceOn[0] = false;
+    detune = olddetune;
+    noteMsg = note;
+    notes[noteMsg] = false;
 
-    env2.noteOff();
-    filterEnv2.noteOff();
-    lfoAenv2.noteOff();
-    env2on = false;
-    voices[1].note = -1;
-    voiceOn[1] = false;
+    switch (NP) {
+      case 0:
+        commandTopNoteUnison();
+        break;
+
+      case 1:
+        commandBottomNoteUnison();
+        break;
+
+      case 2:
+        if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
+          orderIndx = (orderIndx + 1) % 40;
+          noteOrder[orderIndx] = noteMsg;
+        }
+        commandLastNoteUnison();
+        break;
+    }
   }
 
   if (MONO_POLY_1 < 511 && MONO_POLY_2 > 511) {
-    env1.noteOff();
-    filterEnv1.noteOff();
-    lfoAenv1.noteOff();
-    env1on = false;
-    voices[0].note = -1;
-    voiceOn[0] = false;
+    detune = 1.000;
+    noteMsg = note;
+    notes[noteMsg] = false;
+
+    switch (NP) {
+      case 0:
+        commandTopNote();
+        break;
+
+      case 1:
+        commandBottomNote();
+        break;
+
+      case 2:
+        if (notes[noteMsg]) {  // If note is on and using last note priority, add to ordered list
+          orderIndx = (orderIndx + 1) % 40;
+          noteOrder[orderIndx] = noteMsg;
+        }
+        commandLastNote();
+        break;
+    }
   }
+}
+
+int mod(int a, int b) {
+  int r = a % b;
+  return r < 0 ? r + b : r;
+}
+
+void commandTopNote() {
+  int topNote = 0;
+  bool noteActive = false;
+
+  for (int i = 0; i < 88; i++) {
+    if (notes[i]) {
+      topNote = i;
+      noteActive = true;
+    }
+  }
+
+  if (noteActive)
+    commandNote(topNote);
+  else  // All notes are off, turn off gate
+
+    env1.noteOff();
+  filterEnv1.noteOff();
+  lfoAenv1.noteOff();
+  env1on = false;
+}
+
+void commandBottomNote() {
+
+  int bottomNote = 0;
+  bool noteActive = false;
+
+  for (int i = 87; i >= 0; i--) {
+    if (notes[i]) {
+      bottomNote = i;
+      noteActive = true;
+    }
+  }
+
+  if (noteActive)
+    commandNote(bottomNote);
+  else  // All notes are off, turn off gate
+    env1.noteOff();
+  filterEnv1.noteOff();
+  lfoAenv1.noteOff();
+  env1on = false;
+}
+
+void commandLastNote() {
+
+  int8_t noteIndx;
+
+  for (int i = 0; i < 40; i++) {
+    noteIndx = noteOrder[mod(orderIndx - i, 40)];
+    if (notes[noteIndx]) {
+      commandNote(noteIndx);
+      return;
+    }
+  }
+  env1.noteOff();
+  filterEnv1.noteOff();
+  lfoAenv1.noteOff();
+  env1on = false;
+}
+
+void commandNote(int note) {
+
+  note1freq = note;
+  env1.noteOn();
+  filterEnv1.noteOn();
+  lfoAenv1.noteOn();
+  env1on = true;
+}
+
+void commandTopNoteUnison() {
+  int topNote = 0;
+  bool noteActive = false;
+
+  for (int i = 0; i < 88; i++) {
+    if (notes[i]) {
+      topNote = i;
+      noteActive = true;
+    }
+  }
+
+  if (noteActive)
+    commandNoteUnison(topNote);
+  else  // All notes are off, turn off gate
+
+    env1.noteOff();
+  filterEnv1.noteOff();
+  lfoAenv1.noteOff();
+  env1on = false;
+
+  env2.noteOff();
+  filterEnv2.noteOff();
+  lfoAenv2.noteOff();
+  env2on = false;
+}
+
+void commandBottomNoteUnison() {
+
+  int bottomNote = 0;
+  bool noteActive = false;
+
+  for (int i = 87; i >= 0; i--) {
+    if (notes[i]) {
+      bottomNote = i;
+      noteActive = true;
+    }
+  }
+
+  if (noteActive)
+    commandNoteUnison(bottomNote);
+  else  // All notes are off, turn off gate
+    env1.noteOff();
+  filterEnv1.noteOff();
+  lfoAenv1.noteOff();
+  env1on = false;
+
+  env2.noteOff();
+  filterEnv2.noteOff();
+  lfoAenv2.noteOff();
+  env2on = false;
+}
+
+void commandLastNoteUnison() {
+
+  int8_t noteIndx;
+
+  for (int i = 0; i < 40; i++) {
+    noteIndx = noteOrder[mod(orderIndx - i, 40)];
+    if (notes[noteIndx]) {
+      commandNoteUnison(noteIndx);
+      return;
+    }
+  }
+  env1.noteOff();
+  filterEnv1.noteOff();
+  lfoAenv1.noteOff();
+  env1on = false;
+
+  env2.noteOff();
+  filterEnv2.noteOff();
+  lfoAenv2.noteOff();
+  env2on = false;
+}
+
+void commandNoteUnison(int note) {
+
+  note1freq = note;
+  env1.noteOn();
+  filterEnv1.noteOn();
+  lfoAenv1.noteOn();
+  env1on = true;
+
+  note2freq = note;
+  env2.noteOn();
+  filterEnv2.noteOn();
+  lfoAenv2.noteOn();
+  env2on = true;
 }
 
 void allNotesOff() {
@@ -1373,6 +1629,49 @@ void showSettingsPage() {
   showSettingsPage(settings::current_setting(), settings::current_setting_value(), state);
 }
 
+void updateEEPromSettings() {
+
+  if (oldunidetune != unidetune) {
+    switch (unidetune) {
+      case 0:
+        detune = 1.000;
+        break;
+      case 1:
+        detune = 1.001;
+        break;
+      case 2:
+        detune = 1.002;
+        break;
+      case 3:
+        detune = 1.003;
+        break;
+      case 4:
+        detune = 1.004;
+        break;
+      case 5:
+        detune = 1.005;
+        break;
+      case 6:
+        detune = 1.006;
+        break;
+      case 7:
+        detune = 1.007;
+        break;
+      case 8:
+        detune = 1.008;
+        break;
+      case 9:
+        detune = 1.009;
+        break;
+      case 10:
+        detune = 1.010;
+        break;
+    }
+    oldunidetune = unidetune;
+    olddetune = detune;
+  }
+}
+
 void checkSwitches() {
 
   saveButton.update();
@@ -1695,6 +1994,7 @@ void checkEncoder() {
 void loop() {
   checkMux();
   checkSwitches();
+  updateEEPromSettings();
   checkEncoder();
   MIDI.read(midiChannel);
   usbMIDI.read(midiChannel);
@@ -1713,10 +2013,10 @@ void loop() {
   vcoC1.frequency(noteFreqs[note1freq] * octave * octaveC * tuneC * bend);
   sub1.frequency(noteFreqs[note1freq] / 2 * octave * bend);
 
-  vcoA2.frequency(noteFreqs[note2freq] * octave * bend);
-  vcoB2.frequency(noteFreqs[note2freq] * octave * octaveB * tuneB * bend);
-  vcoC2.frequency(noteFreqs[note2freq] * octave * octaveC * tuneC * bend);
-  sub2.frequency(noteFreqs[note2freq] / 2 * octave * bend);
+  vcoA2.frequency(noteFreqs[note2freq] * octave * bend * detune);
+  vcoB2.frequency(noteFreqs[note2freq] * octave * octaveB * tuneB * bend * detune);
+  vcoC2.frequency(noteFreqs[note2freq] * octave * octaveC * tuneC * bend * detune);
+  sub2.frequency(noteFreqs[note2freq] / 2 * octave * bend * detune);
 
   vcoA3.frequency(noteFreqs[note3freq] * octave * bend);
   vcoB3.frequency(noteFreqs[note3freq] * octave * octaveB * tuneB * bend);
