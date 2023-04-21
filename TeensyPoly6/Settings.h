@@ -117,7 +117,7 @@ void setUpSettings() {
   settings::append(settings::SettingsOption{ "Key Priority", { "Top", "Bottom", "Last", "\0" }, settingsNotePriority, currentIndexNotePriority });
   settings::append(settings::SettingsOption{ "Unison Det", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsUnisonDetune, currentIndexUnisonDetune });
   settings::append(settings::SettingsOption{ "Encoder", { "Type 1", "Type 2", "\0" }, settingsEncoderDir, currentIndexEncoderDir });
-  settings::append(settings::SettingsOption{ "Pitch Bend", { "Off", "1", "2", "\0" }, settingsPitchBend, currentIndexPitchBend });
+  settings::append(settings::SettingsOption{ "Pitch Bend", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "\0" }, settingsPitchBend, currentIndexPitchBend });
   settings::append(settings::SettingsOption{ "MW Depth", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsModWheelDepth, currentIndexModWheelDepth });
   settings::append(settings::SettingsOption{ "AT Depth", { "Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "\0" }, settingsafterTouchDepth, currentIndexafterTouchDepth });
 }

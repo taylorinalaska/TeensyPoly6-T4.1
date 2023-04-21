@@ -99,6 +99,7 @@ void setup() {
     }
   } else {
     Serial.println("SD card is not connected or unusable");
+
     reinitialiseToPanel();
     showPatchPage("No SD", "conn'd / usable");
   }
@@ -1291,8 +1292,131 @@ void myAfterTouch(byte channel, byte value) {
 }
 
 void myPitchBend(byte channel, int pitch) {
-  newpitchbend = (pitch + 8192) / 16;
-  bend = 1 + (newpitchbend / 1023 / 4.3) - 0.12;
+  switch (pitchBendRange) {
+    case 0:
+      break;
+
+    case 1:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1, 1.06);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.06) - 0.06);
+      }
+      break;
+
+    case 2:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1, 1.12);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.11) - 0.11);
+      }
+      break;
+
+    case 3:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.19);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.16) - 0.16);
+      }
+      break;
+
+    case 4:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.26);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.21) - 0.21);
+      }
+      break;
+
+    case 5:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.33);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.25) - 0.25);
+      }
+      break;
+
+    case 6:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.42);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.29) - 0.29);
+      }
+      break;
+
+    case 7:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.50);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.33) - 0.33);
+      }
+      break;
+
+    case 8:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.58);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.37) - 0.37);
+      }
+      break;
+
+    case 9:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.68);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.000, 1.405) - 0.405);
+      }
+
+      break;
+
+    case 10:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.79);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.44) - 0.44);
+      }
+      break;
+
+    case 11:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 1.885);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.47) - 0.47);
+      }
+      break;
+
+    case 12:
+      newpitchbend = (pitch + 8192);
+      if (newpitchbend > 8192) {
+        bend = map(newpitchbend, 8193, 16383, 1.00, 2.00);
+      }
+      if (newpitchbend < 8193) {
+        bend = (map(newpitchbend, 0, 8192, 1.00, 1.50) - 0.50);
+      }
+      break;
+  }
 }
 
 void myProgramChange(byte channel, byte program) {
@@ -1358,6 +1482,11 @@ FLASHMEM void setCurrentPatchData(String data[]) {
   revSize = data[37].toFloat();
   lfoAdest = data[38].toFloat();
   lfoAshape = data[39].toFloat();
+  modWheelDepth = data[40].toInt();
+  pitchBendRange = data[41].toInt();
+  afterTouchDepth = data[42].toInt();
+  NP = data[43].toInt();
+  unidetune = data[44].toInt();
 
   //Patchname
   updatePatchname();
@@ -1369,7 +1498,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 }
 
 FLASHMEM String getCurrentPatchData() {
-  return patchName + "," + String(octave) + "," + String(octaveB) + "," + String(octaveC) + "," + String(shapeA) + "," + String(shapeB) + "," + String(shapeC) + "," + String(tuneB) + "," + String(tuneC) + "," + String(crossMod) + "," + String(vcoAvol) + "," + String(vcoBvol) + "," + String(vcoCvol) + "," + String(Subvol) + "," + String(cut) + "," + String(res) + "," + String(filtAtt) + "," + String(filtDec) + "," + String(filtAmt) + "," + String(filterMode) + "," + String(envAtt) + "," + String(envDec) + "," + String(envRel) + "," + String(envSus) + "," + String(lfoAamp) + "," + String(lfoAfreq) + "," + String(lfoAdel) + "," + String(lfoAatt) + "," + String(lfoAdec) + "," + String(lfoArel) + "," + String(lfoAsus) + "," + String(lfoBamp) + "," + String(lfoBfreq) + "," + String(dlyAmt) + "," + String(dlyTimeL) + "," + String(dlyTimeR) + "," + String(revMix) + "," + String(revSize) + "," + String(lfoAdest) + "," + String(lfoAshape);
+  return patchName + "," + String(octave) + "," + String(octaveB) + "," + String(octaveC) + "," + String(shapeA) + "," + String(shapeB) + "," + String(shapeC) + "," + String(tuneB) + "," + String(tuneC) + "," + String(crossMod) + "," + String(vcoAvol) + "," + String(vcoBvol) + "," + String(vcoCvol) + "," + String(Subvol) + "," + String(cut) + "," + String(res) + "," + String(filtAtt) + "," + String(filtDec) + "," + String(filtAmt) + "," + String(filterMode) + "," + String(envAtt) + "," + String(envDec) + "," + String(envRel) + "," + String(envSus) + "," + String(lfoAamp) + "," + String(lfoAfreq) + "," + String(lfoAdel) + "," + String(lfoAatt) + "," + String(lfoAdec) + "," + String(lfoArel) + "," + String(lfoAsus) + "," + String(lfoBamp) + "," + String(lfoBfreq) + "," + String(dlyAmt) + "," + String(dlyTimeL) + "," + String(dlyTimeR) + "," + String(revMix) + "," + String(revSize) + "," + String(lfoAdest) + "," + String(lfoAshape) + "," + String(modWheelDepth) + "," + String(pitchBendRange) + "," + String(afterTouchDepth) + "," + String(NP) + "," + String(unidetune);
 }
 
 FLASHMEM void checkMux() {
