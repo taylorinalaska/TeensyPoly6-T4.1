@@ -81,6 +81,22 @@ int8_t noteOrder[80] = { 0 }, orderIndx = { 0 };
 int noteMsg;
 
 void setup() {
+
+  Serial.begin(115200);
+  while (!Serial && millis() < 10000 );
+  Serial.println("\n" __FILE__ " " __DATE__ " " __TIME__);
+  if (CrashReport) Serial.print(CrashReport);
+
+
+ // if (outputlog == 4) {
+  //  sprintf(buff, "Data access violation forced in 0.5 second");
+  //  DEBUG_PRINTLN(buff);
+  //  delay(500);
+  //   CrashReport.breadcrumb( 1, 0x5000000 | __LINE__ ); // Upper bits hold '5' perhaps indicating func() for ref, lower bits show line #
+  //  *(volatile uint32_t *)0x30000000 = 0; // causes Data_Access_Violation
+
+
+
   AudioMemory(470);
   SPI.begin();
   setupDisplay();
