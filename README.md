@@ -38,7 +38,7 @@ I haven't confirmed these yet, but they aren't labeled well in the schematic and
 
 
 **Below is original text from forked readme
-
+------------------------------------------------------------------
 
 This is a polyphonic synth forked from albnys/TeensyPoly6 converted into a 2U 19" rack.
 
