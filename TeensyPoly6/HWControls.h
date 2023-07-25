@@ -16,10 +16,10 @@ ADC *adc = new ADC();
 #define MUX3 30
 
 //Teensy 3.6 Pins
-
+//change to 4.1: SAVE_SW from '7' to '11'
 #define DEBOUNCE 30
 #define RECALL_SW 24
-#define SAVE_SW 7
+#define SAVE_SW 11
 #define SETTINGS_SW 8
 #define BACK_SW 6
 
