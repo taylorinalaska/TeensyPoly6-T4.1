@@ -2,7 +2,7 @@ Teensy-Poly6
 
 **changes, comments, etc
 
-I am working on adapting to Teensy 4.1. I have 0 experience with Teensy, and bought one specifically for this project. I have very little electronics experience, but followed the original schematic, and made changes as i learned more. I am slowly making progress, but this code currently does not work. the menu comes up, settings can be configured, but I cannot get audio out of the UDA1334 board.
+I am working on adapting to Teensy 4.1. I have 0 experience with Teensy, and bought one specifically for this project. I have very little electronics experience, but followed the original schematic, and made changes as i learned more. I am slowly making progress, ***but this code currently does not work.*** the menu comes up, settings can be configured, but I cannot get audio out of the UDA1334 board.
 
 see here:
 https://forum.pjrc.com/threads/58474-2x-PCM1808-ADCs-recording-LR-ch-each-(I2S-quad-input-)-on-T4-and-also-1-DAC-UDA1334?p=222004&viewfull=1#post222004
