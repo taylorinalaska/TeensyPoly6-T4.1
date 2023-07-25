@@ -32,6 +32,10 @@ In order to use the pins specified in this post for the UDA1334, I have reassign
 I tried to document this as best I could on my schematic, but good lord is it ugly.
 
 
+**Front panel schematic has number indicators for potentiometer locations, see photos folder, "synthlabeled.jpg"**
+
+I haven't confirmed these yet, but they aren't labeled well in the schematic and I used this layout as a reference.
+
 
 **Below is original text from forked readme
 
