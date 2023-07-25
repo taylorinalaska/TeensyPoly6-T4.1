@@ -1,5 +1,5 @@
 Teensy-Poly6
-
+-------------------
 **changes, comments, etc
 
 I am working on adapting to Teensy 4.1. I have 0 experience with Teensy, and bought one specifically for this project. I have very little electronics experience, but followed the original schematic, and made changes as i learned more. I am slowly making progress, ***but this code currently does not work.*** the menu comes up, settings can be configured, but I cannot get audio out of the UDA1334 board.
