@@ -3,10 +3,20 @@
 // This Teensy3 native optimized version requires specific pins
 //#define sclk 27 // SCLK can also use pin 14
 //#define mosi 26 // MOSI can also use pin 7
+// ORIGINAL, UNMODIFIED( except defining sda and scl pins here, but it doesn't really matter. in fact, no one else will ever read this. why am i even typing this?)
+//#define cs 10
+//#define dc 3
+//#define rst 2
+//#define sda 21
+//#define scl 20
+
+// Teensy4.x(?) change to correct pins, also added variables for SDA and SCL below
 
 #define cs 10
 #define dc 3
 #define rst 2
+#define sda 18
+#define scl 19
 
 #define DISPLAYTIMEOUT 1500
 
@@ -26,7 +36,7 @@
 #define FILTER_ENV 3
 #define AMP_ENV 4
 
-ST7735_t3 tft = ST7735_t3(cs, dc, 21, 20, rst);
+ST7735_t3 tft = ST7735_t3(cs, dc, sda, scl, rst);
 
 String currentParameter = "";
 String currentValue = "";
