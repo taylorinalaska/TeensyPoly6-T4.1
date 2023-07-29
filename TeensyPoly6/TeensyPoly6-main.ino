@@ -364,7 +364,7 @@ int getVoiceNo(int note) {
 }
 
 void myNoteOn(byte channel, byte note, byte velocity) {
-
+  Serial.println("MIDI note on");
   if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {
     detune = 1.000;  //POLYPHONIC mode
     if (note < 0 || note > 127) return;
