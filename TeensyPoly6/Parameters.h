@@ -10,12 +10,12 @@ byte ccChannel = midiChannel;
 byte midiOutCh = midiChannel;
 boolean patchRecall = false;
 
-const int muxPots1 = A11;
-const int muxPots2 = A8;
-const int muxPots3 = A12; //WAS A21, 4.1 DOESNT HAVE THIS PIN
-const int muxPots4 = A13; //WAS A22, 4.1 DOESNT HAVE THIS PIN
-const int muxPots5 = A16;
-const int muxPots6 = A17;
+const int muxPots1 = A11;       //25
+const int muxPots2 = A8;       //22
+const int muxPots3 = A12;     //26    //WAS A21, 4.1 DOESNT HAVE THIS PIN
+const int muxPots4 = A13;    //27    //WAS A22, 4.1 DOESNT HAVE THIS PIN
+const int muxPots5 = A16;   //40
+const int muxPots6 = A17;  //41
 
 #define TOLERANCE 3
 
