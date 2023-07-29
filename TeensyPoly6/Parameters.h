@@ -11,7 +11,7 @@ byte midiOutCh = midiChannel;
 boolean patchRecall = false;
 
 const int muxPots1 = A11;
-const int muxPots2 = A14;
+const int muxPots2 = A8;
 const int muxPots3 = A12; //WAS A21, 4.1 DOESNT HAVE THIS PIN
 const int muxPots4 = A13; //WAS A22, 4.1 DOESNT HAVE THIS PIN
 const int muxPots5 = A16;
