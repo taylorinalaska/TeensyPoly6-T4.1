@@ -1,5 +1,5 @@
 //Values below are just for initialising and will be changed when synth is initialised to current panel controls & EEPROM settings
-byte midiChannel = 0;
+byte midiChannel = 1;
 
 byte pitchBendRange;
 byte modWheelDepth;
@@ -140,6 +140,7 @@ AudioEffectFreeverb reverb;         //xy=2204.4674758911133,620.5891056060791
 AudioMixer4 fxL;                    //xy=2379.023365020752,785.255838394165
 AudioMixer4 fxR;                    //xy=2379.023235321045,907.2558078765869
 AudioOutputI2S i2s1;                //xy=2549.5332946777344,853.2666549682617
+AudioControlSGTL5000     sgtl5000_1;
 AudioConnection patchCord1(lfoA1, lfoAenv1);
 AudioConnection patchCord2(lfoA2, lfoAenv2);
 AudioConnection patchCord3(lfoA3, lfoAenv3);
@@ -297,6 +298,8 @@ AudioConnection patchCord152(fxR, 0, i2s1, 1);
 int midiMod = 0;
 
 float newpitchbend = 0;
+
+
 
 ///// notes, frequencies, voices /////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
