@@ -1,7 +1,9 @@
 Teensy-Poly6
 -------------------
 **changes, comments, etc
+
 08/31/23
+
 I got this working. The 3.3v and gnd are backwards for the potentiometers on the schematic, so all my controls are backwards on my custom PCBs. But, it works. There are many changes I'd like to make still:
 - odd popping noise from DAC
 - fix knobs
@@ -11,6 +13,7 @@ I got this working. The 3.3v and gnd are backwards for the potentiometers on the
 
 
 07/24/23
+
 I am working on adapting to Teensy 4.1. I have 0 experience with Teensy, and bought one specifically for this project. I have very little electronics experience, but followed the original schematic, and made changes as i learned more. I am slowly making progress, ***but this code currently does not work.*** the menu comes up, settings can be configured, but I cannot get audio out of the UDA1334 board.
 
 see here:
