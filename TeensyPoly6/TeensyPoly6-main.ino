@@ -1,4 +1,5 @@
 /*
+
   Poly 6 virtual Synth and editor
 
   Includes code by:
@@ -95,7 +96,7 @@ void setup() {
   //   CrashReport.breadcrumb( 1, 0x5000000 | __LINE__ ); // Upper bits hold '5' perhaps indicating func() for ref, lower bits show line #
   //  *(volatile uint32_t *)0x30000000 = 0; // causes Data_Access_Violation
 
-
+  sgtl5000_1.enable();
 
   AudioMemory(470);
   SPI.begin();
@@ -370,7 +371,9 @@ void myNoteOn(byte channel, byte note, byte velocity) {
     if (note < 0 || note > 127) return;
     switch (getVoiceNo(-1)) {
       case 1:
+        
         voices[0].note = note;
+        Serial.println(note);
         note1freq = note;
         env1.noteOn();
         filterEnv1.noteOn();
@@ -491,7 +494,7 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 }
 
 void myNoteOff(byte channel, byte note, byte velocity) {
-
+  Serial.println("MIDI note off");
   if (MONO_POLY_1 < 511 && MONO_POLY_2 < 511) {  //POLYPHONIC mode
     detune = 1.000;
     switch (getVoiceNo(note)) {
@@ -766,7 +769,10 @@ void allNotesOff() {
 }
 
 FLASHMEM void updateVolume() {
+  //Serial.println("mainvol changed");
   mainVol = (float)mux23 / 1024;
+  //mainVol = 127;
+  //Serial.println(mux23);
   midiCCOut(CCvolumeControl, (mux23 >> 3), 1);
 }
 
@@ -1054,6 +1060,7 @@ void updatePatchname() {
 
 
 void myControlChange(byte channel, byte control, byte value) {
+  Serial.println("MIDI control change");
   switch (control) {
 
     case CCmodwheel:
@@ -1114,6 +1121,7 @@ void myControlChange(byte channel, byte control, byte value) {
     case CCvolumeControl:
       mux23 = (value << 3);
       updateVolume();
+      Serial.println("vol changed");
       break;
 
     case CCvcf_frequency:
@@ -1521,10 +1529,11 @@ FLASHMEM void checkMux() {
 
   mux1Read = adc->adc0->analogRead(muxPots1);
   mux2Read = adc->adc0->analogRead(muxPots2);
-  mux3Read = adc->adc0->analogRead(muxPots3);
+  mux3Read = adc->adc1->analogRead(muxPots3);
   mux4Read = adc->adc1->analogRead(muxPots4);
   mux5Read = adc->adc1->analogRead(muxPots5);
   mux6Read = adc->adc1->analogRead(muxPots6);
+  //Serial.println(mux3Read);
 
   if (mux1Read > (mux1ValuesPrev[muxInput] + QUANTISE_FACTOR) || mux1Read < (mux1ValuesPrev[muxInput] - QUANTISE_FACTOR)) {
     mux1ValuesPrev[muxInput] = mux1Read;
@@ -1639,6 +1648,7 @@ FLASHMEM void checkMux() {
       case 7:
         mux23 = mux3Read;
         updateVolume();
+        //Serial.println("Mainvol read");
         break;
     }
   }
@@ -2878,4 +2888,6 @@ void loop() {
 
   fxR.gain(0, outGain - revMix / 1.6);
   fxR.gain(2, outGain - revMix / 1.6);
+
+  //delay(500);
 }
